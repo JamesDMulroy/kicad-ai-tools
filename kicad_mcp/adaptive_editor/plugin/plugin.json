@@ -1,0 +1,32 @@
+{
+  "$schema": "https://go.kicad.org/api/schemas/v1",
+  "identifier": "local.kicad_ai_tools.adaptive_editor",
+  "name": "Adaptive Editor",
+  "description": "Fusion-style adaptive moves for the PCB Editor: drag selected footprints or a board edge; neighbours are shoved within the rules, copper legs re-aim, and the result is previewed before it is applied as one undo step.",
+  "runtime": {
+    "type": "python",
+    "min_version": "3.11"
+  },
+  "actions": [
+    {
+      "identifier": "adaptive-drag",
+      "name": "Adaptive Drag",
+      "description": "Move the selected footprints; neighbours shove (cascade or explicit), copper legs re-aim. Preview, then apply as one undo step.",
+      "show-button": true,
+      "scopes": ["pcb"],
+      "entrypoint": "adaptive_drag.py",
+      "icons-light": ["icons/adaptive-drag-24.png", "icons/adaptive-drag-48.png"],
+      "icons-dark": ["icons/adaptive-drag-dark-24.png", "icons/adaptive-drag-dark-48.png"]
+    },
+    {
+      "identifier": "adaptive-edge",
+      "name": "Adaptive Edge Move",
+      "description": "Move the selected straight Edge.Cuts segment along its normal (grow or shrink the board); parts in the way are pushed inward. Preview, then apply as one undo step.",
+      "show-button": true,
+      "scopes": ["pcb"],
+      "entrypoint": "adaptive_edge.py",
+      "icons-light": ["icons/adaptive-edge-24.png", "icons/adaptive-edge-48.png"],
+      "icons-dark": ["icons/adaptive-edge-dark-24.png", "icons/adaptive-edge-dark-48.png"]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+# The L4 UI registry is approved by the sha256 of its exact bytes; never convert line endings.
+kicad_mcp/l4/registry/*.json -text

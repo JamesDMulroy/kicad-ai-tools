@@ -1,0 +1,1 @@
+{"job_id":"6dc77c36-3c26-48bf-afc9-946325b04217","status":"completed","operation":"kicad_cli","owned_tree_stopped":true,"operation_ok":false,"result":{"ok":false,"status":"refused","error":{"code":"unknown_command","message":"Unknown command"}}}

@@ -1,0 +1,9 @@
+# Installed by KiCad into this plugin's own venv (pip --only-binary :all: --require-virtualenv).
+# Every distribution is pinned; versions match the venv the plugin was tested with.
+kicad-python==0.8.0
+protobuf==5.29.6
+pynng==0.9.0
+cffi==2.1.1
+pycparser==3.11
+sniffio==1.3.1
+typing_extensions==4.16.0

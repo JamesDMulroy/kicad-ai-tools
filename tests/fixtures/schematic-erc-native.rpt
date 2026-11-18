@@ -1,0 +1,11 @@
+ERC report fixture (Encoding UTF8)
+Report includes: Errors, Warnings, Exclusions
+***** Sheet /power/
+[isolated_pin_label]: Label connected to only one pin
+    ; warning
+    @(40.64 mm, 44.45 mm): Symbol #PWR01 Label 'VBUS'
+***** Sheet /control/
+[isolated_pin_label]: Label connected to only one pin
+    ; warning
+    @(40.64 mm, 44.45 mm): Symbol FB1 Label 'EN'
+ ** ERC messages: 2  Errors 0  Warnings 2

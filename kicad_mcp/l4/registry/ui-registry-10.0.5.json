@@ -1,0 +1,265 @@
+{
+  "ambient_windows": [],
+  "kicad_build": "10.0.5",
+  "known_dialogs": {},
+  "main_window": {
+    "match": "contains",
+    "name": "PCB Editor"
+  },
+  "operations": {
+    "pcb_board_setup_read": {
+      "api_alternative": "kicad-cli and the pcbnew Python API expose board settings (for example BOARD.GetCopperLayerCount()) without any UI.",
+      "application": "pcbnew",
+      "controls": {
+        "cancel_button": {
+          "ancestry": [
+            {
+              "control_type": "Window",
+              "name": "Board Setup"
+            }
+          ],
+          "by": "path",
+          "control_type": "Button",
+          "dialog": "board_setup",
+          "name": "Cancel",
+          "name_match": "exact"
+        },
+        "copper_layers": {
+          "ancestry": [
+            {
+              "control_type": "Pane",
+              "name": ""
+            },
+            {
+              "control_type": "Pane",
+              "name": ""
+            },
+            {
+              "control_type": "Pane",
+              "name": "panel"
+            },
+            {
+              "control_type": "Pane",
+              "name": ""
+            }
+          ],
+          "by": "path",
+          "control_type": "ComboBox",
+          "dialog": "board_setup",
+          "name": "Copper layers:",
+          "name_match": "exact"
+        },
+        "stackup_page": {
+          "ancestry": [
+            {
+              "control_type": "Pane",
+              "name": ""
+            },
+            {
+              "control_type": "Pane",
+              "name": ""
+            },
+            {
+              "control_type": "Tree",
+              "name": ""
+            },
+            {
+              "control_type": "TreeItem",
+              "name": "Board Stackup"
+            }
+          ],
+          "by": "path",
+          "control_type": "TreeItem",
+          "dialog": "board_setup",
+          "name": "Physical Stackup",
+          "name_match": "exact"
+        }
+      },
+      "description": "Open File > Board Setup, go to Board Stackup > Physical Stackup, read the copper layer count read-only, close with Cancel.",
+      "dialogs": {
+        "board_setup": {
+          "cancel": {
+            "control_type": "Button",
+            "name": "Cancel"
+          },
+          "safe_to_cancel": true,
+          "window": {
+            "match": "exact",
+            "name": "Board Setup"
+          }
+        }
+      },
+      "params": {},
+      "postcondition": {
+        "file": "board",
+        "required_outputs": [
+          "copper_layers"
+        ],
+        "type": "file_unchanged"
+      },
+      "steps": [
+        {
+          "action": "select_menu",
+          "path": [
+            "File",
+            "Board Setup..."
+          ]
+        },
+        {
+          "action": "wait_dialog",
+          "dialog": "board_setup",
+          "timeout_s": 30
+        },
+        {
+          "action": "invoke",
+          "control": "stackup_page"
+        },
+        {
+          "action": "read_value",
+          "control": "copper_layers",
+          "output": "copper_layers"
+        },
+        {
+          "action": "invoke",
+          "control": "cancel_button"
+        },
+        {
+          "action": "wait_dialog_closed",
+          "dialog": "board_setup",
+          "timeout_s": 30
+        }
+      ]
+    },
+    "pcb_export_gerbers_dialog": {
+      "api_alternative": "kicad-cli pcb export gerbers (kicad_cli_run) produces Gerber files without any UI.",
+      "application": "pcbnew",
+      "controls": {
+        "close_button": {
+          "automation_id": "5101",
+          "by": "automation_id",
+          "control_type": "Button",
+          "dialog": "plot"
+        },
+        "output_dir": {
+          "ancestry": [
+            {
+              "control_type": "Window",
+              "name": "Plot"
+            }
+          ],
+          "by": "path",
+          "control_type": "Edit",
+          "dialog": "plot",
+          "name": "Output directory:",
+          "name_match": "exact"
+        },
+        "plot_button": {
+          "ancestry": [
+            {
+              "control_type": "Window",
+              "name": "Plot"
+            }
+          ],
+          "by": "path",
+          "control_type": "Button",
+          "dialog": "plot",
+          "name": "Plot",
+          "name_match": "exact"
+        }
+      },
+      "description": "File > Fabrication Outputs > Gerbers: set the clone-relative output directory and press Plot.",
+      "dialogs": {
+        "plot": {
+          "cancel": {
+            "automation_id": "5101",
+            "control_type": "Button"
+          },
+          "safe_to_cancel": true,
+          "window": {
+            "match": "exact",
+            "name": "Plot"
+          }
+        }
+      },
+      "params": {
+        "output_dir": {
+          "description": "Output directory, relative to the project clone",
+          "kind": "dir",
+          "required": true,
+          "type": "clone_path"
+        }
+      },
+      "postcondition": {
+        "dir_param": "output_dir",
+        "glob": "*.gbr",
+        "min_count": 1,
+        "type": "files_exist"
+      },
+      "steps": [
+        {
+          "action": "select_menu",
+          "path": [
+            "File",
+            "Fabrication Outputs",
+            "Gerbers (.gbr)..."
+          ]
+        },
+        {
+          "action": "wait_dialog",
+          "dialog": "plot",
+          "timeout_s": 30
+        },
+        {
+          "action": "set_value",
+          "control": "output_dir",
+          "param": "output_dir",
+          "verify": true
+        },
+        {
+          "action": "invoke",
+          "control": "plot_button"
+        },
+        {
+          "action": "invoke",
+          "control": "close_button"
+        },
+        {
+          "action": "wait_dialog_closed",
+          "dialog": "plot",
+          "timeout_s": 60
+        }
+      ]
+    },
+    "pcb_open_and_save": {
+      "api_alternative": "kicad-cli pcb upgrade rewrites a board without any UI; the pcbnew Python SaveBoard() does the same headless.",
+      "application": "pcbnew",
+      "controls": {},
+      "description": "Open the project's board in pcbnew on a hidden desktop and save it (File > Save).",
+      "dialogs": {},
+      "params": {},
+      "postcondition": {
+        "file": "board",
+        "loads_with_kicad_cli": true,
+        "type": "file_rewritten"
+      },
+      "steps": [
+        {
+          "action": "select_menu",
+          "path": [
+            "File",
+            "Save"
+          ]
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "ambient_unstable": [],
+    "dropped": [],
+    "launches": 3,
+    "note": "known_dialogs is empty: any unexpected dialog terminates the instance",
+    "recorded_utc": "2026-10-12T20:21:36+00:00",
+    "tool": "kicad_mcp.l4.broker.record_identifiers"
+  },
+  "schema_version": 1
+}
