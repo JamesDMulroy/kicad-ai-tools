@@ -245,8 +245,10 @@ def sweep(inventory: dict, project: Path, start: int = 0, count: int | None = No
     owned_dirs: list[Path] = []  # every candidate and profile folder, to sweep escaped relaunches at the end
     swept_since = time.time()  # no process created before the sweep began can be one of its escapees
     app_roots: set[Path] = set()  # the KiCad installation(s) the sweep's editors ran from
+    evidence: dict[int, tuple[list[Path], Path, float]] = {}  # pid -> its folders, install and launch time
 
     def start() -> GuiSession:
+        before = time.time()  # the editor is created after this: evidence for the survivor check
         started = GuiSession(board).start()
         # keep the board as it is if refused; layer actions beyond its layers then show no effect
         with contextlib.suppress(api.ApiCallError):
@@ -254,6 +256,7 @@ def sweep(inventory: dict, project: Path, start: int = 0, count: int | None = No
         owned_dirs.extend([started.candidate.work_dir, started.profile])
         app_roots.add(started.app_root)
         launched.append({"pid": started.pid, "at": time.strftime("%H:%M:%S"), "after": len(rows)})
+        evidence[started.pid] = ([started.candidate.work_dir, started.profile], started.app_root, before)
         return started
 
     session = start()
@@ -271,11 +274,12 @@ def sweep(inventory: dict, project: Path, start: int = 0, count: int | None = No
                 rows[-1]["detail"] += "; session restarted after"
     finally:
         session.close(discard=True)
-        survivors = _stop_survivors(launched)
-        from kicad_mcp.ipc.session import stop_strays
+        survivors = _stop_survivors(launched, evidence)
+        from kicad_mcp.ipc.session import stop_strays, stray_image_root
 
         # relaunched outside any job: proven ours by image, creation time and their folders
-        escaped = [pid for root in app_roots for pid in stop_strays(*owned_dirs, image_root=root, since=swept_since)]
+        escaped = [pid for root in app_roots
+                   for pid in stop_strays(*owned_dirs, image_root=stray_image_root(root), since=swept_since)]
         if escaped:
             survivors.append({"escaped_pids": escaped})
     passed = sorted(f"action:{r['action']}" for r in rows if r["outcome"] == "ok")
@@ -284,19 +288,19 @@ def sweep(inventory: dict, project: Path, start: int = 0, count: int | None = No
             "sessions": launched, "survivors": survivors}
 
 
-def _stop_survivors(launched: list[dict]) -> list[dict]:
+def _stop_survivors(launched: list[dict], evidence: dict[int, tuple[list[Path], Path, float]]) -> list[dict]:
     """Any editor this sweep launched that is still running after its session closed: reported, then
-    stopped by its exact PID (it is this sweep's own process, recorded at launch)."""
-    import subprocess
+    stopped. The recorded PID alone is not trusted (it may have been reused): the same checks as every other
+    stray stop apply, read through the handle that terminates it (KiCad image, created after the launch began,
+    command line naming that session's own folders). Only the process itself is stopped, never a tree."""
+    from kicad_mcp.ipc.session import stop_strays, stray_image_root
 
     survivors = []
     for entry in launched:
-        listing = subprocess.run(["tasklist", "/FI", f"PID eq {entry['pid']}", "/NH", "/FO", "CSV"],
-                                 capture_output=True, text=True, timeout=30,
-                                 creationflags=subprocess.CREATE_NO_WINDOW).stdout
-        if f'"{entry["pid"]}"' in listing and "pcbnew" in listing.lower():
-            subprocess.run(["taskkill", "/PID", str(entry["pid"]), "/T", "/F"], capture_output=True,
-                           timeout=30, creationflags=subprocess.CREATE_NO_WINDOW)
+        if entry["pid"] not in evidence:
+            continue
+        folders, root, since = evidence[entry["pid"]]
+        if stop_strays(*folders, image_root=stray_image_root(root), since=since, pids=[entry["pid"]]):
             survivors.append(entry)
     return survivors
 

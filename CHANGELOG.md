@@ -12,6 +12,12 @@
 - `kicad_run_bom_generator` splits the command template before filling placeholders, and refuses to fall
   back to the server's own interpreter.
 - The wheel no longer ships the live coverage drivers that use Frida or cross-process memory writes.
+- The coverage sweep's survivor clean-up uses the same handle-based checks (no `taskkill`), limited to the
+  editors it launched. The stray check's image root is the resolved `<install>/bin` of a real KiCad
+  installation; anything else stops nothing.
+- The `.proto` archive's decompressed size is capped, and download errors surface as the tool's own error.
+- BOM generator placeholders are filled in one pass, and a quoted part inside an argument (`--opt="a b"`)
+  stays one argument without its quotes.
 
 ### Added
 - **On-demand MCP launcher** (`kicad_mcp/launcher.py`, `pythonw -m kicad_mcp.launcher`). The server

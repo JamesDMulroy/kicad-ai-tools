@@ -376,14 +376,40 @@ def expand_generator_command(template: str, netlist: Path, output_base: Path, pr
     out = str(output_base)
     if not out.startswith("\\\\"):
         out = out.replace("\\", "/")  # KiCad's own Windows rule for %O
-    return (template.replace("%P", str(project_dir)).replace("%B", output_base.name)
-            .replace("%I", str(netlist)).replace("%O", out))
+    values = {"P": str(project_dir), "B": output_base.name, "I": str(netlist), "O": out}
+    # one pass: a value that itself contains "%I" or similar is inserted as it is, never expanded again
+    return re.sub(r"%([PBIO])", lambda m: values[m.group(1)], template)
 
 
 def _split_command(line: str) -> list[str]:
-    import shlex
-
-    return [t[1:-1] if len(t) > 1 and t[0] == t[-1] and t[0] in "\"'" else t for t in shlex.split(line, posix=False)]
+    """Split a generator command line the way a Windows program's argv parser does: whitespace outside quotes
+    separates arguments, a double-quoted part (anywhere in an argument, as in --opt="a b") keeps its spaces and
+    loses its quotes, and backslashes stay as they are (Windows paths). A single quote opens a quoted part only
+    at the start of an argument, so a name such as O'Brien is not split."""
+    tokens: list[str] = []
+    current: list[str] = []
+    quote = ""
+    started = False
+    for ch in line:
+        if quote:
+            if ch == quote:
+                quote = ""
+            else:
+                current.append(ch)
+        elif ch == '"' or (ch == "'" and not current):
+            quote, started = ch, True
+        elif ch.isspace():
+            if started:
+                tokens.append("".join(current))
+            current, started = [], False
+        else:
+            current.append(ch)
+            started = True
+    if quote:
+        raise SessionError("the generator command has an unclosed quote")
+    if started:
+        tokens.append("".join(current))
+    return tokens
 
 
 def generator_argv(template: str, netlist: Path, output_base: Path, project_dir: Path) -> list[str]:

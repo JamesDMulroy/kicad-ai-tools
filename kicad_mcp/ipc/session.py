@@ -13,6 +13,7 @@ or this process exiting, ends it.
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 import hashlib
 import os
@@ -245,7 +246,7 @@ class HeadlessSession:
             except subprocess.TimeoutExpired:
                 self.process.kill()
                 self.process.wait()
-        self.strays = stop_strays(self.candidate.work_dir, image_root=self.app_root,  # anything that escaped the job
+        self.strays = stop_strays(self.candidate.work_dir, image_root=stray_image_root(self.app_root),  # escaped the job
                                   since=self.started_at)
         if discard:
             self.candidate.discard()
@@ -272,7 +273,24 @@ def kicad_app_root(cli: str) -> Path:
     return Path(shutil.which(cli) or cli).resolve().parent.parent
 
 
-def stop_strays(*owned_paths: Path, image_root: str | Path | None = None, since: float | None = None) -> list[int]:
+def stray_image_root(app_root: str | Path | None) -> Path | None:
+    """The folder whose executables the stray check may stop: ``<app_root>/bin`` of a real KiCad installation.
+
+    The root is resolved first, and a folder that does not hold ``bin/kicad-cli`` and ``share/kicad`` is not a
+    KiCad installation, so it gives ``None`` and the check stops nothing."""
+    if not app_root:
+        return None
+    root = Path(app_root).resolve()
+    binary = root / "bin"
+    if not any((binary / name).is_file() for name in ("kicad-cli.exe", "kicad-cli")):
+        return None
+    if not (root / "share" / "kicad").is_dir():
+        return None
+    return binary
+
+
+def stop_strays(*owned_paths: Path, image_root: str | Path | None = None, since: float | None = None,
+                pids: Iterable[int] | None = None) -> list[int]:
     """Stop KiCad processes that escaped a session's job object (relaunched through a system hand-off).
 
     Never by name or pattern alone. A process is stopped only when all three hold, each read through the one
@@ -281,7 +299,8 @@ def stop_strays(*owned_paths: Path, image_root: str | Path | None = None, since:
     - it was created no earlier than ``since`` (epoch seconds, taken before the session's folders existed);
     - its command line names one of this session's own uniquely named folders (candidate copy or GUI profile).
     Only the process itself is stopped, never a tree, and only if this user may terminate it. Without an
-    ``image_root`` and ``since`` nothing is stopped. Returns the PIDs stopped.
+    ``image_root`` and ``since`` nothing is stopped. ``pids``, when given, limits the check to those PIDs
+    (for example the editors a caller launched itself). Returns the PIDs stopped.
     """
     if sys.platform != "win32" or not owned_paths or image_root is None or since is None:
         return []
@@ -296,8 +315,9 @@ def stop_strays(*owned_paths: Path, image_root: str | Path | None = None, since:
     access = hd.PROCESS_TERMINATE | hd.PROCESS_QUERY_LIMITED_INFORMATION | hd.SYNCHRONIZE
     k32 = _win_process_api()
     stopped = []
+    only = None if pids is None else {int(p) for p in pids}
     for pid, _parent in hd.process_table():
-        if pid in (0, 4, os.getpid()):
+        if pid in (0, 4, os.getpid()) or (only is not None and pid not in only):
             continue
         handle = k32.OpenProcess(access, False, pid)
         if not handle:

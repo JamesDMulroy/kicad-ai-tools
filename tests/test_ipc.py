@@ -206,3 +206,56 @@ def test_every_process_launch_is_windowless():
                 if not keywords & {"creationflags", "start_new_session"}:
                     loud.append(f"{path.name}:{node.lineno}")
     assert not loud, f"process launches without CREATE_NO_WINDOW: {loud}"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process table")
+def test_stop_strays_limited_to_given_pids(tmp_path: Path) -> None:
+    import time
+
+    from kicad_mcp.ipc.session import stop_strays
+
+    ours = tmp_path / "ours"
+    ours.mkdir()
+    since = time.time()
+    procs = first, second = _sleepers(ours, ours)
+    try:
+        time.sleep(1)
+        stopped = stop_strays(ours, image_root=Path(sys.executable).parent, since=since, pids=[first.pid])
+        time.sleep(1)
+        assert stopped == [first.pid] and first.poll() is not None
+        assert second.poll() is None
+    finally:
+        _reap(procs)
+
+
+def test_stray_image_root_is_the_bin_folder_of_a_real_install(tmp_path: Path) -> None:
+    from kicad_mcp.ipc.session import stray_image_root
+
+    root = tmp_path / "KiCad"
+    (root / "bin").mkdir(parents=True)
+    (root / "share" / "kicad").mkdir(parents=True)
+    assert stray_image_root(root) is None  # no kicad-cli: not an installation
+    (root / "bin" / "kicad-cli.exe").write_bytes(b"")
+    assert stray_image_root(root) == (root / "bin").resolve()
+    assert stray_image_root(tmp_path) is None  # a broad folder above it
+    assert stray_image_root(None) is None
+
+
+def test_sweep_survivors_go_through_the_stray_checks(monkeypatch, tmp_path: Path) -> None:
+    """The sweep never stops a recorded PID on its own word: image, start time and folders are checked, per PID."""
+    from kicad_mcp.coverage import live_actions
+    from kicad_mcp.ipc import session as session_module
+
+    calls = []
+
+    def fake_stop(*folders, image_root=None, since=None, pids=None):
+        calls.append((folders, image_root, since, list(pids)))
+        return list(pids) if pids == [11] else []
+
+    monkeypatch.setattr(session_module, "stop_strays", fake_stop)
+    monkeypatch.setattr(session_module, "stray_image_root", lambda root: Path(root) / "bin")
+    launched = [{"pid": 11}, {"pid": 12}, {"pid": 13}]
+    evidence = {11: ([tmp_path / "a"], tmp_path, 5.0), 12: ([tmp_path / "b"], tmp_path, 6.0)}
+    survivors = live_actions._stop_survivors(launched, evidence)
+    assert survivors == [{"pid": 11}]
+    assert calls == [((tmp_path / "a",), tmp_path / "bin", 5.0, [11]), ((tmp_path / "b",), tmp_path / "bin", 6.0, [12])]

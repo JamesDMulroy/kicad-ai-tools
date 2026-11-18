@@ -25,6 +25,7 @@ from google.protobuf.descriptor import Descriptor
 ARCHIVE_URL = ("https://gitlab.com/api/v4/projects/kicad%2Fcode%2Fkicad/repository/archive.zip"
                "?sha={commit}&path=api/proto")
 MAX_ARCHIVE_BYTES = 8 * 1024 * 1024
+MAX_EXTRACTED_BYTES = 32 * 1024 * 1024  # api/proto is well under 1 MiB; a zip bomb stops here
 
 
 class SchemaError(RuntimeError):
@@ -66,6 +67,8 @@ def fetch_protos(commit: str, dest: Path) -> Path:
             body = response.read(MAX_ARCHIVE_BYTES + 1)
     except SourceCatalogError as exc:
         raise SchemaError(str(exc)) from exc
+    except OSError as exc:  # URLError, HTTPError, timeouts and resets: the tool's own error, not a traceback
+        raise SchemaError(f"could not download api/proto for {commit}: {exc}") from exc
     if len(body) > MAX_ARCHIVE_BYTES:
         raise SchemaError("api/proto archive larger than expected; refusing")
     extract_protos(body, dest)
@@ -76,8 +79,10 @@ def fetch_protos(commit: str, dest: Path) -> Path:
 
 def extract_protos(body: bytes, dest: Path) -> None:
     """Write the archive's ``api/proto`` members under ``dest``; a member that would land anywhere else
-    (``..``, an absolute, drive-qualified or UNC name) refuses the whole archive."""
+    (``..``, an absolute, drive-qualified or UNC name) refuses the whole archive, and so does more than
+    ``MAX_EXTRACTED_BYTES`` of decompressed data (counted as it is read, not taken from the archive's header)."""
     root = dest.resolve()
+    written = 0
     with zipfile.ZipFile(io.BytesIO(body)) as archive:
         for member in archive.namelist():
             marker = "/api/proto/"
@@ -91,7 +96,12 @@ def extract_protos(body: bytes, dest: Path) -> None:
             if root not in target.parents:
                 raise SchemaError(f"unsafe path in archive: {member}")
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(archive.read(member))
+            with archive.open(member) as source:
+                data = source.read(MAX_EXTRACTED_BYTES - written + 1)
+            written += len(data)
+            if written > MAX_EXTRACTED_BYTES:
+                raise SchemaError("api/proto archive expands beyond the expected size; refusing")
+            target.write_bytes(data)
 
 
 def descriptor_set(commit: str, proto_dir: Path | None = None) -> Path:

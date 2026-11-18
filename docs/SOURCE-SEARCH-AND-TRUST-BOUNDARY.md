@@ -188,7 +188,7 @@ only from a reviewed, hashed runner manifest, which does not exist yet.
   data, never followed, so P0 search has no filesystem path-escape surface.
 
 ### 3.4 Acceptance tests now (P0, synthetic transport, no network)
-These exist in `tests/test_source_search.py` (accepted job 5e9e7522):
+These exist in `tests/test_source_search.py`:
 traversal and absolute member names, an archive-root mismatch, a pax SHA
 mismatch, missing and extra members, a blob mismatch, symlink not followed,
 hardlink rejected, a decompression bomb, compressed/member/count caps, binary

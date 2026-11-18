@@ -35,6 +35,10 @@ WHEEL_MUST_HAVE = (
 NEVER_SHIPPED = ("/tests/", "/tests_live/", "__pycache__", ".pyc", "/.tmp/", "/.venv")
 # Dev tools kept in the source distribution only: the icon generator and the live coverage drivers' Frida hooks.
 WHEEL_ONLY_EXCLUDED = ("make_icons.py", "_hook.py", "/coverage/live_external.py", "/coverage/gate.py")
+# The wheel's coverage folder holds exactly the modules the server imports (pyproject.toml's wheel exclude list);
+# any other developer-only driver added later fails the check instead of shipping.
+WHEEL_COVERAGE = {"__init__.py", "live_actions.py", "live_hotkeys.py", "live_tools.py", "live_payloads.py",
+                  "clipboard.py"}
 
 
 def _icons() -> tuple[str, ...]:
@@ -60,6 +64,14 @@ def _check_listing(label: str, names: list[str], must_have: tuple[str, ...], nev
         probe = "/" + name
         problems += [f"{label}: ships {name}" for bad in never if bad in probe]
     return problems
+
+
+def _check_wheel_coverage(label: str, names: list[str]) -> list[str]:
+    shipped = {n.rsplit("/", 1)[1] for n in names if n.startswith("kicad_mcp/coverage/") and n.count("/") == 2}
+    nested = [n for n in names if n.startswith("kicad_mcp/coverage/") and n.count("/") > 2]
+    problems = [f"{label}: coverage ships {n}" for n in sorted(shipped - WHEEL_COVERAGE)]
+    problems += [f"{label}: coverage missing {n}" for n in sorted(WHEEL_COVERAGE - shipped)]
+    return problems + [f"{label}: coverage ships {n}" for n in nested]
 
 
 def _pyflakes() -> list[str]:
@@ -94,6 +106,7 @@ def main() -> int:
             sdist_names = [n.split("/", 1)[1] for n in tf.getnames() if "/" in n]
         problems += _check_listing(wheel.name, wheel_names, WHEEL_MUST_HAVE + _icons(),
                                    NEVER_SHIPPED + WHEEL_ONLY_EXCLUDED)
+        problems += _check_wheel_coverage(wheel.name, wheel_names)
         problems += _check_listing(sdist.name, sdist_names, WHEEL_MUST_HAVE + ("README.md", "LICENSE"), NEVER_SHIPPED)
         print(f"{wheel.name}: {len(wheel_names)} files; {sdist.name}: {len(sdist_names)} files")
     flakes = _pyflakes()

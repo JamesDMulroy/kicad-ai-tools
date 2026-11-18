@@ -26,7 +26,9 @@ from kicad_mcp.ipc.session import (
     SessionError,
     find_kicad_cli,
     installed_commit,
+    kicad_app_root,
     stop_strays,
+    stray_image_root,
 )
 
 READY_TIMEOUT_S = 180.0
@@ -43,7 +45,7 @@ class GuiSession:
         if document.suffix not in DOCUMENT_SUFFIXES:
             raise SessionError(f"a session serves a .kicad_sch or .kicad_pcb, not {document.name}")
         self.cli = cli or find_kicad_cli()
-        self.app_root = Path(self.cli).parent.parent
+        self.app_root = kicad_app_root(self.cli)  # resolved, so the stray check sees the real install
         self.commit = installed_commit(self.cli)
         self.schema = load_schema(self.commit)
         self.candidate = Candidate.of(document, candidate_root)
@@ -186,7 +188,7 @@ class GuiSession:
             self.kicad.close()
             self.kicad = None
         self.strays = stop_strays(self.candidate.work_dir, self.profile,  # anything that escaped the job
-                                  image_root=self.app_root, since=self.started_at)
+                                  image_root=stray_image_root(self.app_root), since=self.started_at)
         if discard:
             self.candidate.discard()
 
@@ -220,7 +222,7 @@ class FrameSession(GuiSession):
 
         self.started_at = time.time()  # before any folder of this session exists (stray-check evidence)
         self.cli = cli or find_kicad_cli()
-        self.app_root = Path(self.cli).parent.parent
+        self.app_root = kicad_app_root(self.cli)  # resolved, so the stray check sees the real install
         self.commit = installed_commit(self.cli)
         self.schema = load_schema(self.commit)
         self.exe = exe
@@ -320,7 +322,8 @@ class FrameSession(GuiSession):
         if self.kicad is not None:
             self.kicad.close()
             self.kicad = None
-        self.strays = stop_strays(self.work_dir, self.profile, image_root=self.app_root, since=self.started_at)
+        self.strays = stop_strays(self.work_dir, self.profile, image_root=stray_image_root(self.app_root),
+                                  since=self.started_at)
         if discard:
             import shutil
 

@@ -50,9 +50,10 @@ ALLOWED: set[tuple[str, str]] = {
     ("tests/test_boardtooling_workflow.py", "drive-letter path"),
     # Claude Desktop's own macOS config/log locations, documented for troubleshooting (product facts)
     ("docs/troubleshooting.md", "home-relative path"),
-    (".github/ISSUE_TEMPLATE/bug_report.md", "home-relative path"),
+    (".forgejo/ISSUE_TEMPLATE/bug_report.md", "home-relative path"),
     ("tests/test_portability.py", "personal or company name"),
     ("LICENSE", "personal or company name"),  # the copyright holders the license names
+    ("README.md", "personal or company name"),  # the public forge account in the clone URL
     ("README.md", "drive-letter path"),  # placeholder install paths in the client-config examples
 }
 
