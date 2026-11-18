@@ -27,7 +27,7 @@ python -m venv .venv
 4. Describe what you verified, and how, in the pull request.
 
 ## Reporting bugs and security issues
-- Bugs and feature requests: open an issue using the templates in `.github/ISSUE_TEMPLATE/`.
+- Bugs and feature requests: open an issue using the templates in `.forgejo/ISSUE_TEMPLATE/`.
 - Security vulnerabilities: do **not** open an issue. Follow `SECURITY.md`.
 
 By contributing you agree that your contributions are licensed under the MIT License (`LICENSE`).

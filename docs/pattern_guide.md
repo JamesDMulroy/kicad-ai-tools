@@ -158,7 +158,7 @@ We strongly encourage you to contribute your pattern recognition extensions back
 
 To contribute:
 
-1. Fork the repository on GitHub
+1. Fork the repository
 2. Make your changes to add new patterns or recognition functions
 3. Test your changes with your own schematics
 4. Submit a pull request with:

@@ -266,7 +266,7 @@ If you're still experiencing problems:
    npx @modelcontextprotocol/inspector uv --directory . run main.py
    ```
 
-2. Open an issue on GitHub with:
+2. Open an issue on the project's Git repository with:
    - A clear description of the problem
    - Steps to reproduce
    - Error messages or logs
