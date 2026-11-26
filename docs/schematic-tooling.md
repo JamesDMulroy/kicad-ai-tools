@@ -17,4 +17,5 @@ logs. Commands and options use the existing typed CLI registry; mutation approva
 and verified backups remain required. CLI workers have no tool-call deadline.
 Server shutdown retains the existing owned-process cleanup behavior.
 
-Fixtures under `tests/fixtures` cover SVG ink, native ERC report syntax,`r`ndeduplication and failure receipts.
+Fixtures under `tests/fixtures` cover SVG ink, native ERC report syntax,
+deduplication and failure receipts.
