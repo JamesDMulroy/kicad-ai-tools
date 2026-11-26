@@ -76,6 +76,20 @@ class TestSecureSubprocessRunner:
             mock_run_subprocess.assert_called_once()
 
     @patch("kicad_mcp.utils.kicad_cli.get_kicad_cli_path")
+    @patch.object(SecureSubprocessRunner, "_run_subprocess")
+    def test_run_kicad_command_logs_no_arguments(self, mock_run_subprocess, mock_get_cli, caplog):
+        """KiCad command logs identify the executable without exposing arguments."""
+        mock_get_cli.return_value = "/usr/bin/kicad-cli"
+        mock_run_subprocess.return_value = MagicMock(returncode=0)
+        runner = SecureSubprocessRunner()
+
+        with caplog.at_level("DEBUG"):
+            runner.run_kicad_command(["sch", "export", "svg", "/tmp/secret-board-name.kicad_sch"])
+
+        assert "secret-board-name" not in caplog.text
+        assert "kicad-cli" in caplog.text
+
+    @patch("kicad_mcp.utils.kicad_cli.get_kicad_cli_path")
     def test_run_kicad_command_cli_not_found(self, mock_get_cli):
         """Test KiCad command when CLI not found."""
         mock_get_cli.side_effect = KiCadCLIError("CLI not found")
@@ -170,12 +184,25 @@ class TestSecureSubprocessRunner:
 
                 assert result is mock_result
 
+    @pytest.mark.parametrize("allowed_commands", [None, []])
+    def test_run_safe_command_requires_non_empty_allowlist(self, allowed_commands):
+        runner = SecureSubprocessRunner()
+
+        with patch.object(runner, "_run_subprocess") as mock_run:
+            with pytest.raises(
+                SecureSubprocessError,
+                match="run_safe_command requires a non-empty allowed_commands list",
+            ):
+                runner.run_safe_command(["echo", "test"], allowed_commands=allowed_commands)
+
+            mock_run.assert_not_called()
+
     def test_run_safe_command_empty_command(self):
         """Test safe command with empty command list."""
         runner = SecureSubprocessRunner()
 
         with pytest.raises(SecureSubprocessError, match="Command cannot be empty"):
-            runner.run_safe_command([])
+            runner.run_safe_command([], allowed_commands=[])
 
     def test_run_safe_command_not_in_whitelist(self):
         """Test safe command not in whitelist."""
@@ -189,7 +216,11 @@ class TestSecureSubprocessRunner:
         runner = SecureSubprocessRunner()
 
         with pytest.raises(PathValidationError):
-            runner.run_safe_command(["echo", "test"], working_dir="/nonexistent/directory")
+            runner.run_safe_command(
+                ["echo", "test"],
+                working_dir="/nonexistent/directory",
+                allowed_commands=["echo"],
+            )
 
     def test_create_temp_file_without_content(self):
         """Test temporary file creation without content."""

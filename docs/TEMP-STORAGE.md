@@ -28,11 +28,13 @@ At server startup, scratch directories named `kicad-ai-tools-*` or
 `kicad_cli_run_*` are eligible for removal only after 24 hours without filesystem
 activity. Workflow journals are eligible after seven days only if their last
 complete state is terminal and recorded owner/worker identities are no longer
-live. These lifetimes are explicit owner requirements. Recent, running, locked,
+live. These lifetimes are project requirements. Recent, running, locked,
 unreadable and reparse-point trees are preserved. Windows Restart Manager checks
 file holders; exclusive directory probes and normal deletion errors provide
 additional protection. Cleanup never stops another process. Platforms without
 an open-handle authority conservatively skip automatic stale deletion.
+
+The desktop tripwire is a test-session monitor that fails the run if any window of the test's own processes reaches the user's desktop.
 
 Tests in `tests/unit/utils/test_temp_cleanup.py` cover call failures, owner close,
 CLI calls with success/failure, retained complete errors, locked files and

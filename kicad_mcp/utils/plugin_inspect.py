@@ -1,7 +1,6 @@
 """L3 tier D1: offline, non-executing inspection of plugin packages.
 
-Design reference: the project's internal plugin and UI isolation design (not published), sections
-A2, A3 and A3c (D1 offline closure check).
+Inspects plugin packages offline without importing or executing their contents.
 
 ABSOLUTE RULE: nothing from an inspected package is ever imported, compiled,
 executed or launched.  This module only
@@ -20,7 +19,6 @@ Public API: :class:`PluginInspectError`, :func:`inspect_package`,
 :func:`closure_check`.
 """
 
-# covers: L3-2
 from __future__ import annotations
 
 import ast
@@ -1305,7 +1303,6 @@ def inspect_package(
     max_members: int = MAX_MEMBERS,
     max_archive_bytes: int = MAX_ARCHIVE_BYTES,
 ) -> dict[str, Any]:
-    # covers: L3-2
     """Inspect a package (``.zip`` archive, directory or single ``.py``) offline.
 
     ``path`` is a name relative to ``quarantine_root`` (an existing directory,
@@ -1428,7 +1425,6 @@ def closure_check(
     max_wheel_members: int = MAX_WHEEL_MEMBERS,
     max_metadata_bytes: int = MAX_TEXT_BYTES,
 ) -> dict[str, Any]:
-    # covers: L3-2
     """Resolve the exact-pin dependency closure of wheels already in quarantine.
 
     Reads each wheel's ``*.dist-info/METADATA`` as data only (no install, no

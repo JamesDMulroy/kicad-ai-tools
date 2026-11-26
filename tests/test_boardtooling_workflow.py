@@ -10,6 +10,7 @@ import sys
 import tempfile
 import threading
 import time
+import tomllib
 import unittest
 from unittest.mock import patch
 from cryptography.hazmat.primitives import serialization
@@ -172,7 +173,10 @@ class WorkflowTests(unittest.TestCase):
                 "reviewer": reviewer, "evidence": evidence}
 
     def test_real_fastmcp_schema_dispatch_and_structural_claim(self):
-        self.assertEqual(kicad_mcp.__version__, "0.1.0")
+        project_version = tomllib.loads(
+            (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+        )["project"]["version"]
+        self.assertEqual(kicad_mcp.__version__, project_version)
         schemas = {tool.name: tool.inputSchema for tool in asyncio.run(self.mcp.list_tools())}
         self.assertIn("expected_bundle_digest", schemas["evaluate_board_gates"]["required"])
         self.assertIn("evidence_dir", schemas["board_release_finalize"]["required"])
@@ -187,15 +191,6 @@ class WorkflowTests(unittest.TestCase):
                                    operation="canvas_mouse_tracking")["supported"])
         self.assertIn("in_editor", self.call("native_board_interaction_capability",
                                              operation="footprint_drag"))
-        from kicad_mcp.tools.analysis_tools import register_analysis_tools
-        analysis = FastMCP("structural-test")
-        register_analysis_tools(analysis)
-        _, result = asyncio.run(analysis.call_tool(
-            "validate_project", {"project_path": str(self.project)}))
-        result = result["result"]
-        self.assertTrue(result["valid"])
-        self.assertEqual(result["scope"], "structural_only")
-        self.assertFalse(result["design_signoff"])
 
     def test_stale_source_rejected_before_gate_dispatch(self):
         with patch.object(bt, "_run") as run:

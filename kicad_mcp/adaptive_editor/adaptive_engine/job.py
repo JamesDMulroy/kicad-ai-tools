@@ -17,7 +17,6 @@ import time
 from ctypes import wintypes as wt
 
 CREATE_SUSPENDED = 0x00000004
-_SILENT_BREAKAWAY_OK = 0x1000
 _KILL_ON_JOB_CLOSE = 0x2000
 _DIE_ON_UNHANDLED_EXCEPTION = 0x0400
 
@@ -72,7 +71,8 @@ class Job:
         if not self.handle:
             raise ctypes.WinError(ctypes.get_last_error())
         info = _Extended()
-        info.basic.flags = _SILENT_BREAKAWAY_OK | _KILL_ON_JOB_CLOSE | _DIE_ON_UNHANDLED_EXCEPTION
+        # Children stay in the job; nested jobs keep both owners' limits.
+        info.basic.flags = _KILL_ON_JOB_CLOSE | _DIE_ON_UNHANDLED_EXCEPTION
         if not self._k.SetInformationJobObject(self.handle, 9, ctypes.byref(info), ctypes.sizeof(info)):
             error = ctypes.WinError(ctypes.get_last_error())
             self._k.CloseHandle(self.handle)
@@ -94,7 +94,7 @@ class Job:
                 data = _List()
                 if self._k.QueryInformationJobObject(self.handle, 3, ctypes.byref(data), ctypes.sizeof(data), None):
                     return [int(data.ids[i]) for i in range(data.listed)]
-            return []
+            raise ctypes.WinError(ctypes.get_last_error())
 
     def active(self) -> int:
         info = _Accounting()

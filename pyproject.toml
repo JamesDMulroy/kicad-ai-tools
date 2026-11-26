@@ -42,9 +42,6 @@ classifiers = [
 requires-python = ">=3.11"  # hashlib.file_digest
 dependencies = [
     "mcp[cli]>=1.0.0,<2",  # the server is written for MCP SDK v1 (FastMCP); v2 renamed it
-    "fastmcp>=2.0.0",
-    "pandas>=2.0.0",
-    "pyyaml>=6.0.0",
     "defusedxml>=0.7.0",  # Secure XML parsing
     # KiCad IPC API (KiCad 11+): the installed build's own .proto files are compiled locally by protoc
     # (protoc-wheel-0 ships the binary), loaded with protobuf, and spoken over NNG.
@@ -65,7 +62,6 @@ embedded = ["zstandard>=0.22"]
 coverage = ["frida>=16.7,<17", "comtypes>=1.4"]
 
 [project.scripts]
-kicad-mcp = "kicad_mcp.server:main"
 kicad-ai-tools-setup = "kicad_mcp.setup:main"
 kicad-ai-tools-server = "kicad_mcp.workflow_server:main"
 
@@ -88,7 +84,7 @@ exclude = ["kicad_mcp/adaptive_editor/tests", "kicad_mcp/adaptive_editor/tests_l
 # An allow-list: local venvs, scratch folders and project-internal documents can never leak into a release.
 only-include = ["kicad_mcp", "docs", "scripts", "README.md", "LICENSE", "CHANGELOG.md", "SECURITY.md",
                 "THIRD-PARTY-NOTICES.md", ".env.example", "pyproject.toml", "uv.lock", "silent_stdio.pyw",
-                "workflow_server.py", "main.py"]
+                "workflow_server.py"]
 exclude = ["**/__pycache__", "kicad_mcp/adaptive_editor/tests", "kicad_mcp/adaptive_editor/tests_live"]
 
 [dependency-groups]
@@ -186,7 +182,6 @@ show_error_codes = true
 
 [[tool.mypy.overrides]]
 module = [
-    "pandas.*",
     "mcp.*",
 ]
 ignore_missing_imports = true

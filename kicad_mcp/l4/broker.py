@@ -2,7 +2,7 @@
 
 ``ui_fallback(operation, project_dir, params)`` runs ONE registered operation on a task-owned clone
 of the project, with pcbnew on a private desktop (never the owner's), driven only through UIA
-patterns by the helper process, under the owner-desktop monitor. It never acts on the original
+patterns by the helper process, under the user-desktop monitor. It never acts on the original
 project, whose file hashes are compared before and after.
 
 Order of refusals (no GUI is launched before all pass): registry approval by sha256, schema, KiCad
@@ -282,7 +282,7 @@ class HiddenSession:
 
     def check(self) -> None:
         if self.violated.is_set():
-            raise L4Error("owner_desktop_violation", "a task window or focus change reached the owner's desktop; "
+            raise L4Error("owner_desktop_violation", "a task window or focus change reached the user's desktop; "
                           "the instance was killed", violations=self.violations)
 
     def _start_helper(self) -> None:
@@ -594,7 +594,6 @@ def ui_fallback(operation: Any, project_dir: Any, params: Any = None, *,
                 registry_path: str | os.PathLike | None = None, evidence_root: str | os.PathLike | None = None,
                 app_root: str | os.PathLike | None = None, approval_env: Mapping[str, str] | None = None,
                 kicad_build: str | None = None, base_env: Mapping[str, str] | None = None) -> dict:
-    # covers: L4-1
     """Run one registered L4 operation on a clone of ``project_dir``. Never raises for expected failures."""
     began = time.time()
     result: dict[str, Any] = {"operation": operation, "ok": False, "status": "refused", "launched": False,
@@ -682,7 +681,7 @@ def ui_fallback(operation: Any, project_dir: Any, params: Any = None, *,
 
 
 def list_operations(registry_path=None, approval_env=None) -> dict:
-    """Registry facts for the owner and the operations a caller may run (none unless approved and valid)."""
+    """Registry facts and the operations a caller may run (none unless approved and valid)."""
     info = inspect_registry_file(registry_path, approval_env)
     out: dict[str, Any] = {"registry": info, "operations": []}
     if not info.get("readable"):
@@ -691,8 +690,10 @@ def list_operations(registry_path=None, approval_env=None) -> dict:
     elif not info.get("approved"):
         out["status"] = "refused"
         out["error"] = {"code": "registry_unapproved",
-                        "message": f"registry sha256 {info['sha256']} is not in the owner-approved list; "
-                                   "all operations are refused"}
+                        "message": f"registry sha256 {info['sha256']} is not approved; "
+                                   "add a sha256 you recorded yourself to KICAD_MCP_L4_APPROVED_REGISTRY_SHA256 "
+                                   "(comma-separated) in the server environment; the shipped registry is approved "
+                                   "by kicad_mcp/l4/registry/APPROVED.sha256; all operations are refused"}
     elif not info.get("schema_valid"):
         out["status"] = "refused"
         out["error"] = {"code": "registry_invalid", "message": info.get("schema_error")}
@@ -997,7 +998,6 @@ def registry_bytes(document: dict) -> bytes:
 def record_identifiers(project_dir: Any, *, registry_out: str | os.PathLike | None = None,
                        evidence_root: str | os.PathLike | None = None, app_root: str | os.PathLike | None = None,
                        kicad_build: str | None = None, base_env: Mapping[str, str] | None = None) -> dict:
-    # covers: L4-2
     """Record candidate identifiers over three independent launches and write the registry document.
 
     The document goes to ``registry_out`` when given (the owner then approves its sha256), else only
@@ -1055,7 +1055,7 @@ def record_identifiers(project_dir: Any, *, registry_out: str | os.PathLike | No
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_bytes(raw)
                     result["registry_path"] = str(target)
-                result["approval_instruction"] = (f"owner approval: set KICAD_MCP_L4_APPROVED_REGISTRY_SHA256 to "
+                result["approval_instruction"] = (f"Set KICAD_MCP_L4_APPROVED_REGISTRY_SHA256 to "
                                                   f"{result['registry_sha256']}")
     except Exception as exc:
         result["error"] = {"code": "broker_exception", "message": f"{type(exc).__name__}: {exc}", "details": {}}

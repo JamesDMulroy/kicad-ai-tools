@@ -21,7 +21,6 @@ order:
 | `kicad_cli` | `KICAD_CLI_PATH` | Exact kicad-cli executable | `<root>/bin/kicad-cli` |
 | `kicad_python` | `KICAD_AI_TOOLS_KICAD_PYTHON` | KiCad's bundled python (pcbnew) | `<root>/bin/python.exe` on Windows |
 | `kicad_user_dir` | `KICAD_USER_DIR` | Your KiCad documents folder | `<OS Documents>/KiCad` (redirected folders honoured) |
-| `project_search_paths` | `KICAD_SEARCH_PATHS` (comma-separated) | Extra folders to look for projects in | None; no folders are guessed |
 | — | `KICAD_DOCUMENTS_HOME` | KiCad's own documents-home override (KiCad honours it too) | OS Documents folder |
 | `data_dir` | `KICAD_AI_TOOLS_DATA_DIR` | Per-user state: tool manifest cache, workflow jobs | `<user data dir>/kicad-ai-tools` |
 | `job_dir` | `KICAD_MCP_JOB_DIR` | Workflow job journals | `<data dir>/workflow-jobs` |

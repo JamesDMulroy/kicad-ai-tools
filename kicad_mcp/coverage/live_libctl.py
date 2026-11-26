@@ -22,7 +22,6 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
-import tempfile
 import time
 
 from kicad_mcp.coverage.live_hotkeys import FRAMES, _input_for, _start

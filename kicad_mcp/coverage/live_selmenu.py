@@ -11,14 +11,13 @@ and keeps the text too. A click inside the sheet away from the text is the contr
     python -m kicad_mcp.coverage.live_selmenu --inventory inv.json --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import contextlib
 import json
 import os
 from pathlib import Path
-import tempfile
 import time
 import uuid
 

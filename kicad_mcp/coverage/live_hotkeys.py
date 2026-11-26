@@ -9,7 +9,7 @@ ran with nothing observable is reported ``no_effect`` and stays unverified.
     python -m kicad_mcp.coverage.live_hotkeys --inventory inv.json --project <dir> --editor eeschema --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import json
@@ -266,7 +266,6 @@ def _first_of(session, kind: str | None) -> str | None:
 def sweep(inventory: dict, project: Path, editor: str, start: int = 0, count: int | None = None,
           only: list[str] | None = None, with_cursor: bool = False, enter_sheet: bool = False,
           library_tree: bool = False) -> dict:
-    import tempfile
 
     document = _input_for(editor, project, Path(scoped_mkdtemp(prefix="kicad-ai-tools-frames-")))
     all_actions = [a["name"] for a in inventory["actions"]]

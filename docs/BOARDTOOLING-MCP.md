@@ -52,8 +52,7 @@ and can outlive a client's default tool-call wait.
 
 Project paths are explicit tool arguments. Gate and release calls require the
 expected bundle digest; the adapter rechecks source identity and rejects
-missing or mismatched evidence. `validate_project` in the optional legacy
-server is a structural file/JSON check, never design signoff.
+missing or mismatched evidence.
 Evaluation accepts `attestation_paths` as a list of direct external evidence
 files and `gate_report_path` for the exact native gate receipt. Preview requires
 both, pins their hashes with the current host-configured

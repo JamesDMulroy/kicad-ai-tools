@@ -18,7 +18,7 @@ An action no user can trigger, or that has no handler in this build, is not fake
     python -m kicad_mcp.coverage.live_board_misc --inventory inv.json --project <dir> --out ev.json [--only a,b]
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import contextlib
@@ -27,7 +27,6 @@ import os
 from pathlib import Path
 import re
 import shutil
-import tempfile
 import time
 
 from kicad_mcp.ipc import api, hotkeys
@@ -1384,7 +1383,7 @@ def _api_refused(env: Env) -> bool:
         return True
 
 
-def _pad_size(pad: dict) -> tuple[int, int]:
+def _pad_dims(pad: dict) -> tuple[int, int]:
     size = pad["pad_stack"]["copper_layers"][0]["size"]
     return int(size["x_nm"]), int(size["y_nm"])
 
@@ -1397,9 +1396,9 @@ def case_PushPadSettings_applied(env: Env) -> dict:
     groups: dict[str, list[dict]] = {}
     for pad in pads:
         groups.setdefault(json.dumps(pad.get("parent", {})), []).append(pad)
-    group = next(g for g in groups.values() if len(g) >= 3 and len({_pad_size(p) for p in g}) == 1)
+    group = next(g for g in groups.values() if len(g) >= 3 and len({_pad_dims(p) for p in g}) == 1)
     source, others = group[0], group[1:]
-    old = _pad_size(source)
+    old = _pad_dims(source)
     new = (old[0] + 200_000, old[1] + 200_000)
     # a pad is edited through its footprint (UpdateItems ignores a pad sent on its own)
     footprint = next(f for f in _items(env.s, "KOT_PCB_FOOTPRINT") if f["id"] == source.get("parent", {}).get("id", source.get("parent")))
@@ -1419,9 +1418,9 @@ def case_PushPadSettings_applied(env: Env) -> dict:
         return _row("pcbnew.PadTool.PushPadSettings", "error", "the pad was not found inside its footprint")
     api.call(env.s, "UpdateItems", {"items": [footprint]})
     time.sleep(0.8)
-    src_now = next(_pad_size(p) for p in _items(env.s, "KOT_PCB_PAD") if p["id"]["value"] == source["id"]["value"])
+    src_now = next(_pad_dims(p) for p in _items(env.s, "KOT_PCB_PAD") if p["id"]["value"] == source["id"]["value"])
     ids = [p["id"]["value"] for p in others]
-    sizes = lambda: [_pad_size(p) for p in _items(env.s, "KOT_PCB_PAD") if p["id"]["value"] in ids]  # noqa: E731
+    sizes = lambda: [_pad_dims(p) for p in _items(env.s, "KOT_PCB_PAD") if p["id"]["value"] in ids]  # noqa: E731
     before = sizes()
     env.select(source["id"]["value"])
     title = "Push Pad Properties"

@@ -1,273 +1,45 @@
-# Troubleshooting Guide
-
-This guide helps you troubleshoot common issues with the KiCad MCP Server.
-
-## Server Setup Issues
-
-### Server Not Starting
-
-**Symptoms:**
-- Error messages when running `python main.py`
-- Server crashes immediately
-
-**Possible Causes and Solutions:**
-
-1. **Missing Dependencies**
-   - **Error:** `ModuleNotFoundError: No module named 'mcp'`
-   - **Solution:** Ensure you have installed the required packages
-     ```bash
-     pip install -r requirements.txt
-     ```
-
-2. **Python Version**
-   - **Error:** Syntax errors or unsupported features
-   - **Solution:** Verify you're using Python 3.10 or higher
-     ```bash
-     python --version
-     ```
-
-3. **Configuration Issues**
-   - **Error:** `FileNotFoundError` or errors related to paths
-   - **Solution:** Check your `.env` file and ensure all paths exist
-
-4. **Permission Issues**
-   - **Error:** `PermissionError: [Errno 13] Permission denied`
-   - **Solution:** Ensure you have the necessary permissions for all directories and files
-
-## MCP Client Integration Issues
-
-### Server Not Appearing in Client
-
-**Symptoms:**
-- Server not showing in Claude Desktop tools dropdown
-- Unable to access KiCad tools in the client
-
-**Possible Causes and Solutions:**
-
-1. **Configuration File Issues**
-   - **Problem:** Incorrect or missing configuration
-   - **Solution:** Check your client configuration file:
-     
-     For Claude Desktop (macOS):
-     ```bash
-     cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
-     ```
-     
-     For Claude Desktop (Windows):
-     ```bash
-     type %APPDATA%\Claude\claude_desktop_config.json
-     ```
-     
-     Ensure it contains the correct server configuration:
-     ```json
-     {
-         "mcpServers": {
-             "kicad": {
-                 "command": "/ABSOLUTE/PATH/TO/YOUR/PROJECT/kicad-mcp/venv/bin/python",
-                 "args": [
-                     "/ABSOLUTE/PATH/TO/YOUR/PROJECT/kicad-mcp/main.py"
-                 ]
-             }
-         }
-     }
-     ```
-
-2. **Working Directory Issues**
-   - **Problem:** The server can't find files due to working directory issues
-   - **Solution:** Always use absolute paths in your configuration
-     
-     Replace:
-     ```json
-     "args": ["main.py"]
-     ```
-     
-     With:
-     ```json
-     "args": ["/absolute/path/to/main.py"]
-     ```
-
-3. **Client Needs Restart**
-   - **Problem:** Changes to configuration not applied
-   - **Solution:** Close and reopen your MCP client
-
-4. **MCP Protocol Version Mismatch**
-   - **Problem:** Client and server using incompatible protocol versions
-   - **Solution:** Update both the client and server to compatible versions
-
-## Working with KiCad
-
-### KiCad Python Modules Not Found
-
-**Symptoms:**
-- Warning messages about missing KiCad Python modules
-- Limited functionality for PCB analysis, DRC, etc.
+# Troubleshooting
 
-**Possible Causes and Solutions:**
+This guide covers the current `kicad-ai-tools` launcher server. Run setup with the same Python environment used to install the package.
 
-1. **KiCad Not Installed**
-   - **Problem:** KiCad installation not found
-   - **Solution:** Install KiCad from [kicad.org](https://www.kicad.org/download/)
+## KiCad not found
 
-2. **Non-standard KiCad Installation**
-   - **Problem:** KiCad installed in a non-standard location
-   - **Solution:** Set the `KICAD_APP_PATH` environment variable in your `.env` file:
-     ```
-     KICAD_APP_PATH=/path/to/KiCad/KiCad.app
-     ```
+Run the read-only diagnostic:
 
-3. **Python Path Issues**
-   - **Problem:** KiCad Python modules not in Python path
-   - **Solution:** Check server logs for Python path setup errors
+```powershell
+python -m kicad_mcp.setup --check
+```
 
-### Unable to Open KiCad Projects
+Review the reported KiCad root, `kicad-cli` path, and any error. If KiCad is installed in a location discovery does not find, set `KICAD_APP_PATH` to its install root. To use a particular command-line executable, set `KICAD_CLI_PATH` to its full path. An explicit but invalid path is reported as an error; it does not fall back to discovery. Run `--check` again after changing the environment.
 
-**Symptoms:**
-- Error when trying to open a KiCad project
-- KiCad doesn't launch when requested
+## The MCP client shows the server as disconnected
 
-**Possible Causes and Solutions:**
+Run `python -m kicad_mcp.setup` again, then use the printed `mcp_server_entry` (or `claude_code_add_json`) for your client. Check that the entry's `command` points to an existing `pythonw.exe` beside the Python interpreter used to run setup, and that its arguments point to this checkout's `silent_stdio.pyw` when present. Setup reports an error if the Windows `pythonw.exe` is missing; rerun it with the Python environment that will serve the tools. Apply the updated entry using your client's MCP server configuration and restart or start a new client session as appropriate.
 
-1. **KiCad Not Found**
-   - **Problem:** KiCad executable not found
-   - **Solution:** Set the correct `KICAD_APP_PATH` in your `.env` file
+## IPC session tools are refused
 
-2. **Project Path Issues**
-   - **Problem:** Project file not found
-   - **Solution:** Double-check the path to your KiCad project file
-   - Ensure the path is an absolute path
-   - Ensure the file exists and has a `.kicad_pro` extension
+The IPC API session tools require KiCad 10.99 nightly or KiCad 11. KiCad 10.0 supports the `kicad-cli`, adaptive, and L4 tools, but not those IPC session tools. Check the installed version in the `--check` output and use a compatible KiCad build for IPC sessions.
 
-3. **Permission Issues**
-   - **Problem:** Insufficient permissions to launch KiCad
-   - **Solution:** Check file and application permissions
+## L4 registry is refused
 
-## Project Discovery Issues
+L4 runs only from a registry whose SHA-256 is approved. The shipped registry is approved through `kicad_mcp/l4/registry/APPROVED.sha256`. If you intentionally use a registry you recorded yourself, configure its digest in `KICAD_MCP_L4_APPROVED_REGISTRY_SHA256` as a comma-separated list of SHA-256 values. Treat this as a host security setting; only approve a registry you trust.
 
-### KiCad Projects Not Found
+## Tests fail on a locked or remote desktop
 
-**Symptoms:**
-- No projects listed when asking for KiCad projects
-- Missing specific projects that you know exist
+The L4 UI tests use a private desktop and a tripwire. A locked desktop or remote desktop session can prevent the required desktop checks from succeeding. Run those tests with the Windows desktop unlocked, then rerun the test command. A test session that launches no KiCad process passes even when the desktop cannot be observed; it reports "desktop not observable, no launches".
 
-**Possible Causes and Solutions:**
+## BOM generator is disabled
 
-1. **Search Path Issues**
-   - **Problem:** Server not looking in the right directories
-   - **Solution:** Configure search paths in your `.env` file:
-     ```
-     KICAD_SEARCH_PATHS=<projects folder>,<another folder>
-     ```
+`kicad_run_bom_generator` is refused by default because it can start an external program. To enable it for the server, set `KICAD_AI_TOOLS_ALLOW_BOM_GENERATOR=1` in the environment from which the MCP client starts the server. The setting is an explicit host opt-in.
 
-2. **KiCad User Directory Override**
-   - **Problem:** Custom KiCad user directory not being searched
-   - **Solution:** Set `KICAD_USER_DIR` in your `.env` file:
-     ```
-     KICAD_USER_DIR=<your KiCad documents folder>
-     ```
+## Logs and per-user data
 
-3. **File Extension Issues**
-   - **Problem:** Projects not recognized due to file extensions
-   - **Solution:** Ensure your KiCad projects have the `.kicad_pro` extension
+Run `python -m kicad_mcp.setup --check` to inspect resolved settings and the per-machine config path. The config defaults to `%APPDATA%\kicad-ai-tools\config.json`; `KICAD_AI_TOOLS_CONFIG` selects a different path.
 
-## Debugging and Logging
+Per-user state, including the tool manifest cache and workflow jobs, lives by default under the operating system's user data directory in `kicad-ai-tools`. `KICAD_AI_TOOLS_DATA_DIR` overrides that location. Workflow job journals default to `workflow-jobs` beneath the data directory and can be moved with `KICAD_MCP_JOB_DIR`.
 
-### Checking Logs
+The server uses the MCP client's logging facilities for its process output; this project does not define a separate fixed server log directory. Consult the logs for your MCP client when investigating a launch or protocol failure. Avoid including secrets or sensitive project data in reports.
 
-To diagnose issues, check the server logs:
+## Reporting a problem
 
-1. **Claude Desktop Logs (macOS)**
-   - Server logs:
-     ```bash
-     tail -n 20 -F ~/Library/Logs/Claude/mcp-server-kicad.log
-     ```
-   - General MCP logs:
-     ```bash
-     tail -n 20 -F ~/Library/Logs/Claude/mcp.log
-     ```
-
-2. **Claude Desktop Logs (Windows)**
-   - Check logs in:
-     ```
-     %APPDATA%\Claude\Logs\
-     ```
-
-## DRC and Export Feature Issues
-
-### DRC Checks Failing
-
-**Symptoms:**
-- Error messages when running DRC checks
-- Incomplete DRC results
-
-**Possible Causes and Solutions:**
-
-1. **KiCad CLI Tools Not Found**
-   - **Problem:** Command-line tools not available
-   - **Solution:** Ensure you have a complete KiCad installation with CLI tools
-
-2. **PCB File Issues**
-   - **Problem:** Invalid or corrupted PCB file
-   - **Solution:** Verify the PCB file can be opened in KiCad
-
-### PCB Thumbnail Generation Failing
-
-**Symptoms:**
-- Unable to generate PCB thumbnails
-- Error messages about missing modules
-
-**Possible Causes and Solutions:**
-
-1. **Missing KiCad Python Modules**
-   - **Problem:** Unable to import pcbnew module
-   - **Solution:** The server will try alternative methods, but functionality may be limited
-
-2. **File Path Issues**
-   - **Problem:** PCB file not found
-   - **Solution:** Ensure you're using absolute paths and the PCB file exists
-
-## Environment-Specific Issues
-
-### macOS Issues
-
-1. **Permissions**
-   - **Problem:** Permission denied when accessing files
-   - **Solution:** Ensure Terminal has full disk access in System Preferences > Security & Privacy
-
-2. **Python Environment**
-   - **Problem:** System Python vs. Homebrew Python confusion
-   - **Solution:** Specify the full path to the Python interpreter in your client configuration
-
-### Windows Issues
-
-1. **Path Separator Issues**
-   - **Problem:** Backslashes in Windows paths causing issues
-   - **Solution:** Use forward slashes (/) in all paths, or double backslashes (\\\\)
-
-2. **Command Execution**
-   - **Problem:** Issues launching KiCad from the server
-   - **Solution:** Ensure the KICAD_APP_PATH is set correctly in your `.env` file
-
-### Linux Issues
-
-1. **KiCad Installation Location**
-   - **Problem:** KiCad installed in non-standard location
-   - **Solution:** Set KICAD_APP_PATH to your KiCad installation location
-
-2. **Permission Issues**
-   - **Problem:** Unable to access certain files
-   - **Solution:** Check file permissions with `ls -la` and adjust with `chmod` if needed
-
-## Still Having Issues?
-
-If you're still experiencing problems:
-
-1. Use the MCP Inspector for direct server testing:
-   ```bash
-   npx @modelcontextprotocol/inspector uv --directory . run main.py
-   ```
-
-2. Open an issue on the project's Git repository with:
-   - A clear description of the problem
-   - Steps to reproduce
-   - Error messages or logs
-   - Your environment details (OS, Python version, KiCad version)
+For a reproducible bug, open an issue using the repository's issue templates. Include the relevant error text, steps to reproduce, and the Python and KiCad versions; remove secrets and private design data from logs first. For a security issue, follow the instructions in `SECURITY.md` instead of posting details publicly.

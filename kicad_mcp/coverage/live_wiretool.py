@@ -14,12 +14,11 @@ The mouse position is told to KiCad inside the session's own process (cursor hoo
     python -m kicad_mcp.coverage.live_wiretool --inventory inv.json --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import json
 from pathlib import Path
-import tempfile
 import time
 import uuid
 

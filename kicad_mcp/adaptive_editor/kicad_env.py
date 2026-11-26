@@ -257,7 +257,6 @@ def _inside_kicad_python() -> Path | None:
 
 @lru_cache(maxsize=1)
 def kicad_app_root() -> Path:
-    # covers: MCP-2
     """The KiCad installation root. Raises KiCadNotFound with what was tried."""
     tried = []
     configured = setting("kicad_app_root", KICAD_ROOT_ENV)
@@ -378,7 +377,6 @@ SETTINGS = (  # (config key, environment variable, meaning) for setup --check an
     ("kicad_cli", "KICAD_CLI_PATH", "kicad-cli executable"),
     ("kicad_python", "KICAD_AI_TOOLS_KICAD_PYTHON", "KiCad's bundled python"),
     ("kicad_user_dir", "KICAD_USER_DIR", "KiCad documents folder"),
-    ("project_search_paths", "KICAD_SEARCH_PATHS", "extra project folders"),
     ("job_dir", "KICAD_MCP_JOB_DIR", "workflow job journals"),
     ("data_dir", DATA_DIR_ENV, "per-user state (manifest cache, default job folder)"),
     ("quarantine_root", "KICAD_MCP_QUARANTINE_ROOT", "offline plugin-inspection quarantine (L3)"),
@@ -415,7 +413,6 @@ def explain_settings() -> list[dict]:
 
 
 def describe() -> dict:
-    # covers: MCP-2
     """Everything resolved, for setup and capability reports (no exceptions)."""
     out: dict = {"platform_backend": backend().name, "backend_tested": backend().tested}
     try:

@@ -26,7 +26,7 @@ import shutil
 import sys
 import time
 import uuid
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 PLUGIN_ID = "local.kicad_ai_tools.adaptive_editor"
 # KiCad 10.0.5 API_PLUGIN::IsValidIdentifier (common/api/api_plugin.cpp): reverse-DNS, word characters only.
@@ -44,6 +44,13 @@ LIVE_FILES = ("live_session.py", "engine_worker.py", "preview_render.py")
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _safe_rel(rel) -> bool:
+    """Whether a record path is a safe, normalized plugin-relative POSIX path."""
+    if not isinstance(rel, str) or not rel or "\\" in rel or ":" in rel or rel.startswith("/"):
+        return False
+    return all(part not in ("..", ".", "") for part in PurePosixPath(rel).parts)
 
 
 def default_target(documents: Path | None = None) -> Path:
@@ -74,6 +81,13 @@ def _parse_record(path: Path) -> dict | None:
     except (OSError, ValueError):
         return None
     if not isinstance(data, dict) or data.get("plugin") != PLUGIN_ID or not isinstance(data.get("files"), dict):
+        return None
+    pending = data.get("pending", {})
+    dirs = data.get("dirs", [])
+    if (not isinstance(pending, dict) or not isinstance(dirs, list)
+            or any(not _safe_rel(rel) for rel in data["files"])
+            or any(not _safe_rel(rel) for rel in pending)
+            or any(not _safe_rel(rel) for rel in dirs)):
         return None
     return data
 
@@ -167,7 +181,6 @@ def check_manifest() -> dict:
 
 
 def install(target: Path, dry_run: bool) -> dict:
-    # covers: PLG-2
     check_manifest()
     record = _read_record(target)
     if target.exists() and any(target.iterdir()) and record is None:
@@ -242,7 +255,6 @@ def _remove_own_bytecode(directory: Path, recorded_py: set[str]) -> None:
 
 
 def uninstall(target: Path, dry_run: bool) -> dict:
-    # covers: PLG-2
     record = _read_record(target)
     if record is None:
         return {"action": "uninstall", "target": str(target), "status": "not_installed"}

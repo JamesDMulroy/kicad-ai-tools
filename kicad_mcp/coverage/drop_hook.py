@@ -2,7 +2,7 @@
 
 A file dropped on a KiCad frame arrives as ``WM_DROPFILES`` whose handle is a block of global memory (a
 ``DROPFILES`` header and the paths) owned by the receiving process. That block cannot be made from another
-process, so this hook (Frida, in the session's KiCad process only; nothing on the owner's desktop is involved)
+process, so this hook (Frida, in the session's KiCad process only; nothing on the user's desktop is involved)
 allocates it there and posts the message to the frame, which runs the action registered for the file's extension
 (``pcbnew.Control.DdAppendBoard`` for a board, ``ddImportFootprint`` for a footprint, and so on).
 """

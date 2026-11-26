@@ -19,7 +19,7 @@ from typing import Any, Callable, Iterable
 # ---- pure logic -------------------------------------------------------------------------------
 
 def task_windows_on_input_desktop(windows: Iterable[dict], task_pids: Iterable[int]) -> list[dict]:
-    """Windows of the task's process tree found on the owner's input desktop (must be empty)."""
+    """Windows of the task's process tree found on the user's input desktop (must be empty)."""
     pids = set(task_pids)
     return [w for w in windows if w.get("pid") in pids]
 

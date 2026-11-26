@@ -1,9 +1,9 @@
 """Offline unit tests for the adaptive engine (stdlib unittest, synthetic in-memory models).
 
-On Windows the package starts a whole-tree owner-desktop guard when it is imported (before any test runs):
+On Windows the package starts a whole-tree user-desktop guard when it is imported (before any test runs):
 the same guard as the pytest session (``tests/conftest.py``) for this unittest tier, which launches
 kicad-cli and KiCad's python. ``test_zz_desktop_guard`` runs last and fails if any process of this run
-showed a window on the owner's desktop or if the desktop could not be observed.
+showed a window on the user's desktop or if the desktop could not be observed.
 """
 import os
 import sys

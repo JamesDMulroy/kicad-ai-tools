@@ -25,10 +25,11 @@ Every function takes a session (a GuiSession for the editor-bound ones) and retu
 ``register_function_fallback_tools`` wraps them with a session id, like ``fallback_tools``.
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import base64
 import hashlib
+import io
 import os
 from pathlib import Path
 import re
@@ -46,11 +47,12 @@ EMBED_TYPES = {"EFT_OTHER": "other", "EFT_FONT": "font", "EFT_MODEL": "model", "
 WM_COMMAND, WM_LBUTTONDOWN, WM_LBUTTONUP = 0x0111, 0x0201, 0x0202
 BBOX_CONTROL_ID = 1618  # the wx id of the Appearance panel's "Model Bounding Boxes" row
 CREATE_NO_WINDOW = 0x08000000
+MAX_EMBEDDED_BYTES = 256 * 1024 * 1024
 
 
 # --- embedded files --------------------------------------------------------------------------------
 
-def zstd_decompress(data: bytes) -> bytes:
+def zstd_decompress(data: bytes, *, limit: int = MAX_EMBEDDED_BYTES) -> bytes:
     try:
         import zstandard
     except ImportError:
@@ -58,8 +60,19 @@ def zstd_decompress(data: bytes) -> bytes:
             from compression import zstd  # Python 3.14+
         except ImportError as exc:
             raise SessionError("decoding embedded files needs the 'zstandard' package (pip install zstandard)") from exc
-        return zstd.decompress(data)
-    return zstandard.ZstdDecompressor().decompressobj().decompress(data)
+        result = zstd.ZstdDecompressor().decompress(data, max_length=limit + 1)
+        if len(result) > limit:
+            raise SessionError(f"embedded file expands beyond {limit} bytes; refusing")
+        return result
+    with zstandard.ZstdDecompressor().stream_reader(io.BytesIO(data)) as reader:
+        chunks = []
+        total = 0
+        while chunk := reader.read(1024 * 1024):
+            total += len(chunk)
+            if total > limit:
+                raise SessionError(f"embedded file expands beyond {limit} bytes; refusing")
+            chunks.append(chunk)
+        return b"".join(chunks)
 
 
 def zstd_compress(data: bytes, level: int = 15) -> bytes:
@@ -336,7 +349,6 @@ def _remove_through_setup_panel(session, name: str) -> str:
         raise SessionError("the schematic has unsaved changes; save it first (a misplaced click is undone by reloading "
                            "the saved file, which would discard them)")
     scale = hotkeys.user32.GetDpiForWindow(ctypes.c_void_p(frame)) / 96.0
-    import tempfile
 
     scratch = Path(scoped_mkdtemp(prefix="kicad-ai-tools-embcheck-")) / "check.kicad_sch"
     want = [n for n in names if n != name]

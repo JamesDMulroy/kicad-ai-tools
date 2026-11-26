@@ -365,7 +365,6 @@ def _is_tuned(chain: _Chain) -> bool:
 def adapt_copper(
     board: Board, part_moves: dict[str, Point], allow_partial_hint: bool = True
 ) -> CopperResult:
-    # covers: ADE-2
     """Adapt copper for the given part displacements. See the module docstring.
 
     ``allow_partial_hint`` is accepted for API symmetry; the partial back-off lives in the solver.

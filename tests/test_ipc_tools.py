@@ -1,6 +1,9 @@
 """MCP IPC tools and typed-route helpers without KiCad: error paths and payload shaping."""
 from __future__ import annotations
 
+import threading
+import time
+
 from kicad_mcp.coverage import live_typed
 from kicad_mcp.tools import ipc_tools
 
@@ -16,6 +19,49 @@ def test_session_cap_refuses_before_starting_kicad(monkeypatch) -> None:
     monkeypatch.setattr(ipc_tools, "_sessions", {str(i): object() for i in range(ipc_tools.MAX_SESSIONS)})
     result = ipc_tools.session_open("does/not/matter.kicad_sch")
     assert result["status"] == "error" and "sessions are open" in result["error"]["message"]
+
+
+def test_concurrent_session_opens_respect_cap(monkeypatch) -> None:
+    class SlowSession:
+        def __init__(self, document):
+            self.document = document
+
+        def start(self):
+            time.sleep(0.2)
+            return self
+
+    monkeypatch.setattr(ipc_tools, "_sessions", {})
+    monkeypatch.setattr(ipc_tools, "_pending", 0)
+    monkeypatch.setattr(ipc_tools, "HeadlessSession", SlowSession)
+    monkeypatch.setattr(ipc_tools, "_describe", lambda _session: {})
+    results = []
+    threads = [threading.Thread(target=lambda: results.append(ipc_tools.session_open("x.kicad_pcb")))
+               for _ in range(ipc_tools.MAX_SESSIONS + 3)]
+    try:
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        assert sum(result["status"] == "ok" for result in results) <= ipc_tools.MAX_SESSIONS
+    finally:
+        with ipc_tools._lock:
+            ipc_tools._sessions.clear()
+
+
+def test_failed_session_start_releases_pending_slot(monkeypatch) -> None:
+    class FailedSession:
+        def __init__(self, document):
+            pass
+
+        def start(self):
+            raise RuntimeError("start failed")
+
+    monkeypatch.setattr(ipc_tools, "_sessions", {})
+    monkeypatch.setattr(ipc_tools, "_pending", 0)
+    monkeypatch.setattr(ipc_tools, "HeadlessSession", FailedSession)
+    result = ipc_tools.session_open("x.kicad_pcb")
+    assert result["status"] == "error"
+    assert ipc_tools._pending == 0
 
 
 def test_created_id_reads_both_reply_shapes() -> None:

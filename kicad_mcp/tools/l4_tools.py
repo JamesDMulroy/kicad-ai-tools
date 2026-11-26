@@ -49,7 +49,7 @@ def register_l4_tools(mcp: FastMCP) -> None:
         """Run one registered L4 operation on a task-owned CLONE of ``project_dir`` (absolute, synthetic projects only).
 
         pcbnew runs on a private Win32 desktop (never the owner's), driven only through UI Automation
-        patterns, under a monitor that kills it if any of its windows reaches the owner's desktop. The
+        patterns, under a monitor that kills it if any of its windows reaches the user's desktop. The
         original project is never touched (its hashes are compared before and after). Unknown operations,
         unknown or ill-typed parameters, an unapproved registry sha256 or a KiCad build different from the
         registry's are refused before anything is launched. Blocks until the run ends (minutes); the

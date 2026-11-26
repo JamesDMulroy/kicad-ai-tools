@@ -12,14 +12,13 @@ several layers, items stack and the viewer asks which one in a popup menu).
     python -m kicad_mcp.coverage.live_gerbview --inventory inv.json --project <dir> --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import collections
 import json
 from pathlib import Path
 import re
-import tempfile
 import time
 
 from kicad_mcp.coverage.live_hotkeys import _input_for, _start

@@ -6,7 +6,7 @@ Asserts:
 - apply writes the planned final state in one commit;
 - a second session's cancel writes nothing;
 - an edit to an unrelated item after preview makes apply refuse (concurrent_edit);
-- no window of the test's process tree reaches the owner's desktop.
+- no window of the test's process tree reaches the user's desktop.
 
 The engine worker and the fixture build also run on private desktops. Writes an evidence JSON;
 exit 1 on any failed assertion.
@@ -16,7 +16,6 @@ from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import json
 import sys
-import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))

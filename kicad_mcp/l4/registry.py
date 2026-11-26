@@ -164,7 +164,6 @@ class Registry:
 
 def load_registry(path: str | os.PathLike | None = None, env: Mapping[str, str] | None = None, *,
                   kicad_build: str | None = None, skip_build_check: bool = False) -> Registry:
-    # covers: L4-2
     """Read, approve, validate and version-check a registry. Any failure is a :class:`RegistryRefusal`.
 
     The sha256 is computed over the exact file bytes. Approval is checked first, so an unapproved

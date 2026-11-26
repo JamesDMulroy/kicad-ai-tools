@@ -1,5 +1,5 @@
 """Shared live-test harness: everything a live test starts runs on a private desktop, and the whole
-process tree of the test is watched for windows on the owner's desktop. Results are written as evidence.
+process tree of the test is watched for windows on the user's desktop. Results are written as evidence.
 """
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def build_fixture_board(work: Path) -> Path:
 
 class Watch:
     """Continuous tripwire over this test's entire process tree (KiCad, workers, helpers, pip...): a
-    background thread samples the owner's input desktop every ``interval`` seconds for the whole run,
+    background thread samples the user's input desktop every ``interval`` seconds for the whole run,
     including drags, applies and undos. Samples where the desktop could not be opened (locked) are counted,
     never treated as clean; ``close()`` returns the record for the evidence."""
 

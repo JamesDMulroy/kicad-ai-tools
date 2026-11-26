@@ -820,7 +820,6 @@ def _run_cli(command: str, input_raw: str | None, options: Any, output_raw: str 
 
 
 def register_cli_tools(mcp: FastMCP) -> None:
-    # covers: L1-1
     @mcp.tool()
     def kicad_cli_commands() -> dict[str, Any]:
         """The full typed kicad-cli 10.0.5 registry: 43 leaf commands, options, choices, run status."""

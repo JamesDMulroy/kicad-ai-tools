@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Removed
+- The inherited upstream `kicad-mcp` server (the `kicad-mcp` command, `main.py`, its project, analysis,
+  export, DRC, BOM, netlist and pattern tools, resources, prompts and guides). It read and wrote caller
+  paths, could open the desktop KiCad and loaded a `.env` file, all outside the safety model in
+  `SECURITY.md`. The original project is https://github.com/lamaalrajih/kicad-mcp.
+- The `pandas`, `fastmcp` and `pyyaml` dependencies, which only those tools used.
+- The `project_search_paths` setting (`KICAD_SEARCH_PATHS`), which only the removed server read.
+
 ### Security
 - Escaped-process cleanup no longer matches command lines alone: a process is stopped only if its
   executable is under the session's KiCad installation, it started after the session, and its command
@@ -39,7 +47,7 @@
 
 - **Process ownership by Job Object** (`adaptive_engine/job.py`): engine, live-harness and L4 launches own
   every descendant, even after the parent exits; tree walks follow a parent link only to a younger process.
-- **Fail-closed owner-desktop tripwires** for the broker, the live harness, the pytest session
+- **Fail-closed user-desktop tripwires** for the broker, the live harness, the pytest session
   (`tests/conftest.py`) and the KiCad-python unittest tier: a visible window stops the task, and so does a
   sample where the desktop cannot be observed.
 - **Release bill of materials** (`scripts/build_release.py`): wheel, sdist, `SHA256SUMS` and a CycloneDX 1.5

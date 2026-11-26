@@ -1,6 +1,6 @@
 """Adaptive (Fusion-style) board edits for AI clients: plan, preview, apply, undo.
 
-The engine is the AdaptiveEditor package (``adaptive_engine``: neutral model, solver, pcbnew
+The adaptive engine (``kicad_mcp/adaptive_editor``; ``adaptive_engine``: neutral model, solver, pcbnew
 adapter, session journal). It runs under KiCad's own ``python.exe`` (pcbnew) through
 ``secure_subprocess.run_contained`` (hidden, job-contained, output captured); this server never
 imports pcbnew. Each call writes one request JSON to a private temp dir and runs::
@@ -22,12 +22,11 @@ the KiCad canvas itself is not available through KiCad 10.0.5's IPC API (uncommi
 rendered), so it would need native code; ``native_board_interaction_capability`` says so.
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import json
 import os
 import shutil
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -158,12 +157,11 @@ def _session(session: Any, board_path: str | None) -> dict | None:
 
 @cleanup_after_call
 def run_engine(command: str, payload: dict | None) -> dict[str, Any]:
-    # covers: ADE-4
     """Run one engine CLI command hidden and contained; always returns one JSON-able dict."""
     root, py = engine_root(), kicad_python()
     if root is None:
         return {"ok": False, "error": True, "code": "engine_not_found",
-                "message": f"adaptive engine not found; set {ENGINE_ENV} to the AdaptiveEditor/python directory"}
+                "message": f"adaptive engine not found; set {ENGINE_ENV} to the kicad_mcp/adaptive_editor directory of this package"}
     if py is None:
         return {"ok": False, "error": True, "code": "kicad_python_not_found",
                 "message": "KiCad's python.exe (with pcbnew) was not found; set KICAD_APP_PATH"}
@@ -216,7 +214,6 @@ def capability_report(probe_engine: bool = True) -> dict[str, Any]:
 
 
 def register_adaptive_tools(mcp: FastMCP) -> None:
-    # covers: ADE-4
     @mcp.tool()
     def adaptive_capability() -> dict[str, Any]:
         """Adaptive engine status: where it is, KiCad's python, the engine's capability report, and what is

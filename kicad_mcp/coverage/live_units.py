@@ -5,13 +5,12 @@ action's key is pressed, and the editor's unit selector is read back through UI 
     python -m kicad_mcp.coverage.live_units --inventory inv.json --project <ecc83 demo dir> --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import json
 from pathlib import Path
 import shutil
-import tempfile
 import time
 
 from kicad_mcp.coverage.live_hotkeys import _start

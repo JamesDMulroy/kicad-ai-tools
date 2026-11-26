@@ -1043,7 +1043,6 @@ def _assemble(ctx: _Ctx, n: int, achieved: int, best, first_ill, full_ok_expecte
 
 
 def solve(board: Board, request) -> SolveResult:
-    # covers: ADE-1
     """Solve a part-driver request (edge drivers are forwarded to ``solve_edge``)."""
     try:
         req = _coerce(request)

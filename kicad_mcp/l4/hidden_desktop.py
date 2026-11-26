@@ -1,13 +1,13 @@
 """Run KiCad on a private, never-shown Win32 desktop with a task-owned profile.
 
-Vendored from ``AdaptiveEditor/python/live/hidden_kicad.py`` and generalised to any KiCad
+Generalised from ``kicad_mcp/adaptive_editor/live/hidden_kicad.py`` to any KiCad
 executable under a KICAD_APP_PATH-aware application root.
 
-Every process in this package that must not touch the owner's desktop (KiCad, the UIA helper and
+Every process in this package that must not touch the user's desktop (KiCad, the UIA helper and
 the placement self-check child) is created ONLY through :func:`create_process_on_desktop`, which
 calls ``CreateProcessW`` with ``STARTUPINFOW.lpDesktop`` set to a private desktop. Python's
 ``subprocess`` startup-info class has no desktop field, so setting a desktop there silently does
-nothing and shows windows on the owner's desktop; this module never uses it.
+nothing and shows windows on the user's desktop; this module never uses it.
 
 Safety properties:
 - the profile is task-owned and pre-seeded (no start wizard, no settings migration prompt);
@@ -18,12 +18,12 @@ Safety properties:
 - the broker's HiddenSession runs a windowless placement self-check before its GUI launch and refuses
   the launch if a child created this way does not report the private desktop as its own (HiddenKiCad
   used on its own does not run it);
-- a tripwire kills the process tree if any of its windows reaches the owner's input desktop, and stops
+- a tripwire kills the process tree if any of its windows reaches the user's input desktop, and stops
   it when the input desktop cannot be observed (fail closed);
 - processes are stopped by exact handle (PID plus creation time), then the desktop is closed.
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import ctypes
 import ctypes.wintypes as wt
@@ -32,7 +32,6 @@ import os
 import secrets
 import shutil
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -135,11 +134,11 @@ class PlacementError(LaunchPreconditionError):
 
 
 class VisibleWindowError(RuntimeError):
-    """A task window reached the owner's input desktop; the process was killed."""
+    """A task window reached the user's input desktop; the process was killed."""
 
 
 class OwnerDesktopUnobservable(VisibleWindowError):
-    """The owner's input desktop could not be observed (e.g. locked): the tripwire cannot look, so the task
+    """The user's input desktop could not be observed (e.g. locked): the tripwire cannot look, so the task
     is stopped. Never treated as "nothing seen"."""
 
 
@@ -345,7 +344,7 @@ def tree_pids(roots) -> set[int]:
 
 
 def owner_windows_of_tree(roots) -> list[dict] | None:
-    """Windows on the owner's input desktop owned by any process in the given trees; None when the input
+    """Windows on the user's input desktop owned by any process in the given trees; None when the input
     desktop cannot be opened (e.g. locked), so a caller can tell "nothing seen" from "could not look"."""
     windows = input_desktop_windows()
     if windows is None:
@@ -359,7 +358,7 @@ def owner_windows_of(pid: int) -> list[dict]:
     Fails closed: raises OwnerDesktopUnobservable when the input desktop cannot be observed."""
     seen = owner_windows_of_tree([pid])
     if seen is None:
-        raise OwnerDesktopUnobservable("the owner's desktop could not be observed (locked?); the task is stopped")
+        raise OwnerDesktopUnobservable("the user's desktop could not be observed (locked?); the task is stopped")
     return seen
 
 
@@ -676,7 +675,7 @@ class HiddenKiCad:
 
     def _start_watch(self) -> None:
         """Keep the tripwire on for the session's whole life, not only its start: a window any member of the
-        tree shows on the owner's desktop later (a dialog, another program KiCad starts) ends the session
+        tree shows on the user's desktop later (a dialog, another program KiCad starts) ends the session
         within a quarter second, and is logged."""
         import threading
 
@@ -712,7 +711,7 @@ class HiddenKiCad:
             try:  # the root and every member of its Job Object (descendants, even orphaned ones)
                 leaked = owner_windows_of_tree([self.pid, *(self.proc.pids() if self.proc else [])])
                 if leaked is None:
-                    raise OwnerDesktopUnobservable("the owner's desktop could not be observed (locked?); "
+                    raise OwnerDesktopUnobservable("the user's desktop could not be observed (locked?); "
                                                    "the task is stopped")
             except OwnerDesktopUnobservable:
                 self.kill()  # fail closed

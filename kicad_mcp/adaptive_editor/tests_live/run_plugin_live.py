@@ -8,7 +8,7 @@
 3. KiCad discovers the installed plugin (it builds the plugin's venv and pip-installs requirements);
 4. the panel's Tk drawing runs on another private desktop and draws the real preview primitives;
 5. uninstall removes every installed file and the bytecode Python wrote for them;
-6. no window of the test's process tree reaches the owner's desktop.
+6. no window of the test's process tree reaches the user's desktop.
 Every subprocess (fixture build, installer, engine worker, KiCad, Tk) runs on a private desktop.
 Writes an evidence JSON; exit 1 on any failed assertion.
 """
@@ -18,7 +18,6 @@ from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 import importlib.util
 import json
 import sys
-import tempfile
 import time
 from pathlib import Path
 

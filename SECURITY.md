@@ -37,6 +37,9 @@ that flag alone is not consent: the tool also refuses unless the person running 
 
 **Configured code is trusted.** The optional BoardTooling adapter imports and runs Python modules from
 the BoardTooling root the operator configures. Point it only at code you trust.
+`ADAPTIVE_KICAD_HEADLESS_DIR` (the adaptive engine helper directory) and
+`KICAD_AI_TOOLS_KICAD_PYTHON` are imported or executed in the same way, so set them only to locations
+you trust.
 
 **Developer-only drivers.** The live coverage drivers under `kicad_mcp/coverage` (Frida hooks into the
 test's own KiCad process, cross-process memory writes) ship in the source distribution only. The wheel
@@ -51,8 +54,8 @@ an account whose files you are willing to expose to the assistant you connect.
 Security fixes go to the latest release on the default branch.
 
 ## Reporting a vulnerability
-Please report vulnerabilities privately by email to **hello@jamesmulroy.com**. Do not open a public
-issue. Include:
+Please report vulnerabilities privately by email to **hello@jamesmulroy.com** or use GitHub private
+vulnerability reporting on github.com/JamesDMulroy/kicad-ai-tools. Do not open a public issue. Include:
 - the tool name and the inputs;
 - what happened and what you expected;
 - any evidence or log file, with personal paths removed.

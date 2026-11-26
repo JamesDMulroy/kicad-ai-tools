@@ -1,9 +1,4 @@
-"""
-Tool handlers for KiCad MCP Server.
-
-This package includes:
-- Project management tools
-- Analysis tools
-- Export tools (BOM extraction, PCB thumbnail generation)
-- DRC tools
+"""Tool modules registered by kicad-ai-tools-server:
+adaptive, CLI, fallback, full capability, function fallback, IPC, L4, schematic,
+and BoardTooling workflow tools.
 """

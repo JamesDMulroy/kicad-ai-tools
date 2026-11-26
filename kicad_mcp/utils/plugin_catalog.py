@@ -5,8 +5,7 @@ Distinguishes bundled legacy scripting-API files, user scripting plugins, PCM
 compiles, parses as code, or executes any plugin file; never accepts a
 caller-supplied scan root.
 
-Roots mirror KiCad 10.0.5's ``PATHS`` (per the source receipts in
-development evidence (not published); no live KiCad run verified this): the user
+Roots mirror KiCad 10.0.5's ``PATHS``. The scanner checks the bundled, settings, documents,`r`nand environment-configured plugin roots described below; live KiCad behaviour for these`r`nroots is not yet verified. The user
 documents base is ``KICAD_DOCUMENTS_HOME`` if set, else the OS Documents known
 folder, with ``KiCad/10.0`` appended. A set-but-empty ``KICAD_DOCUMENTS_HOME`` is
 treated as set (KiCad tests only ``wxGetEnv``): every documents-derived root is then
@@ -767,7 +766,6 @@ def _discover_plugin_json(root: Path, resolved_from: str) -> dict[str, Any]:
 
 
 def inventory_plugins() -> dict[str, Any]:
-    # covers: L3-1
     """Read-only, host-configured metadata inventory. Never follows a caller-supplied root."""
     legacy_root, legacy_src = _legacy_scripting_root()
     legacy_base, _ = _legacy_scripting_base()

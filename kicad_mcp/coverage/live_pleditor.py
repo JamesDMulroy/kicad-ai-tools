@@ -9,7 +9,7 @@ image, append sheet) are answered through UI Automation with a fixture file.
     python -m kicad_mcp.coverage.live_pleditor --inventory inv.json --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import base64

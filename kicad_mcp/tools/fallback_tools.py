@@ -317,6 +317,8 @@ def _block_span(text: str, token: str) -> tuple[int, int]:
             if depth == 0:
                 break
         pos += 1
+    if depth != 0:
+        raise SessionError(f"the board file's ({token} block is not closed")
     line_start = text.rfind("\n", 0, start) + 1
     return line_start, pos + 1
 

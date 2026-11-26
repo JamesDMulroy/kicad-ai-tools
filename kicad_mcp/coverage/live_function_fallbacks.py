@@ -25,7 +25,7 @@ The two HPGL CLI commands are removed from KiCad: their refusal text is recorded
         [--only embed-pcb,autosave,sch,hier,3d,hpgl]
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import base64
@@ -767,7 +767,6 @@ PHASE_ACTIONS = {"bom-dialog": {BOM}, "embed-pcb": {EXTRACT, REMOVE}, "autosave"
 
 @cleanup_after_call
 def main(argv: list[str] | None = None) -> int:
-    import tempfile
 
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     parser.add_argument("--inventory", type=Path, required=True)

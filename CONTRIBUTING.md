@@ -20,11 +20,13 @@ python -m venv .venv
 ```
 
 ## Before you open a pull request
-1. Run `python -m pytest tests`. Tests that need KiCad skip cleanly without it.
-2. Run `ruff check kicad_mcp tests`.
-3. If you changed the tool surface, run `python scripts/gen_operation_matrix.py` and commit
+1. Run the Windows and KiCad tests on a maintainer's Windows machine with KiCad installed:
+   `python -m pytest` (with an unlocked desktop).
+2. CI runs lint and the Linux-safe tests.
+3. Run `ruff check kicad_mcp tests`.
+4. If you changed the tool surface, run `python scripts/gen_operation_matrix.py` and commit
    `docs/OPERATION-MATRIX.md`.
-4. Describe what you verified, and how, in the pull request.
+5. Describe what you verified, and how, in the pull request.
 
 ## Reporting bugs and security issues
 - Bugs and feature requests: open an issue using the templates in `.forgejo/ISSUE_TEMPLATE/`.

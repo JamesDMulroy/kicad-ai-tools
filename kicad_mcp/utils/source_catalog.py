@@ -248,7 +248,6 @@ def list_source_tree(path: str = "", page: int = 1, per_page: int = 50,
 
 def read_source_file(path: str, offset: int = 0, length: int = DEFAULT_CHUNK_BYTES,
                       transport: Transport = _default_transport) -> dict[str, Any]:
-    # covers: L2-1
     """Stream a pinned file by byte range; returns a continuation offset until ``done`` is true."""
     normalized = _normalize_repo_path(path)
     if not normalized:
@@ -597,7 +596,6 @@ def _cache_put(key: tuple, matches: list[dict[str, Any]], coverage: dict[str, An
 def search_source_code(query: str, path: str = "", mode: str = "literal", case_sensitive: bool = False,
                        max_matches: int = 100, cursor: int = 0, transport: Transport = _default_transport,
                        archive_transport: ArchiveTransport | None = None) -> dict[str, Any]:
-    # covers: L2-1
     """Client-side search over a commit-pinned, path-scoped archive proven against the tree listing.
 
     Matches are exact for the whole scope (full scan, paginated by ``cursor``). ``no_match`` is only

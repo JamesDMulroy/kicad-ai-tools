@@ -1,9 +1,4 @@
-"""Clipboard guard: verify actions that write the clipboard without losing the owner's text.
-
-The owner approved this on 2026-10-14 on the condition that the current text is saved first and restored
-within about two seconds, always (finally block). Only text can be restored; an image or other
-format that was on the clipboard before is lost, which is why the guard records what it saw.
-"""
+"""Save the user's clipboard before a test uses it and restore it afterward."""
 
 from __future__ import annotations
 
@@ -103,7 +98,7 @@ class Observation:
     after_formats: list[int] = field(default_factory=list)
     text: str | None = None
     saved_text: str | None = None
-    saved_ok: bool = False  # the owner's text was read, so it can be restored
+    saved_ok: bool = False  # the user's clipboard text was read, so it can be restored
     restored: bool | None = None  # None until the guard exits; True only after a verified restore
 
     @property
@@ -116,7 +111,7 @@ class Observation:
 
     @property
     def new_content(self) -> bool:
-        """The clipboard changed and now holds an image or text that differs from the owner's text."""
+        """The clipboard changed and now holds an image or text that differs from the user's clipboard text."""
         return self.changed and (self.has_image or bool(self.text and self.text != self.saved_text))
 
     def capture(self) -> None:
@@ -141,7 +136,7 @@ def preserved():
     """Save the clipboard text, yield an Observation, and always restore the text on exit.
 
     Nothing is restored (and nothing cleared) when the text could not be read; ``restored`` says
-    whether the owner's text is back, verified by reading it again.
+    whether the user's clipboard text is back, verified by reading it again.
     """
     obs = Observation()
     try:

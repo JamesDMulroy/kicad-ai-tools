@@ -9,7 +9,7 @@ Per action: RunAction, then
   recorded: the action ran, its input step is UI;
 - if the editor stays busy (an interactive tool waiting for the mouse) it is cancelled, else the
   session is restarted;
-- the owner-desktop tripwire is checked: a window reaching the user's screen kills the session.
+- the user-desktop tripwire is checked: a window reaching the user's screen kills the session.
 
 Actions that hand off to another program (browser, Explorer, an external text editor, the calculator)
 would open windows outside this process tree, where the tripwire cannot see them; they are never run
@@ -210,7 +210,7 @@ def _run_once(session: GuiSession, name: str, baseline: dict[int, str] | None = 
         sender.close()
     time.sleep(0.2)
     closed, responsive = _settle(session, before)
-    session.kicad._tripwire(0.1)  # raises (and kills) if anything reached the owner's desktop
+    session.kicad._tripwire(0.1)  # raises (and kills) if anything reached the user's desktop
     detail = "; ".join(x for x in (status, note, f"closed {closed}" if closed else "") if x)
     if retry and note.startswith("AS_BUSY"):
         return _run_once(session, name, baseline, retry=False)

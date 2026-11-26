@@ -17,7 +17,6 @@ class PlacementMove(BaseModel):
 
 
 def register_workflow_tools(mcp: FastMCP, jobs: WorkflowJobs | None = None) -> None:
-    # covers: BT-1
     def start_job(operation: str, arguments: dict) -> dict[str, Any]:
         if jobs is None:
             raise RuntimeError("Durable workflow jobs require the managed stdio server")

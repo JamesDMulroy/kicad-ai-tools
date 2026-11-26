@@ -17,8 +17,4 @@ logs. Commands and options use the existing typed CLI registry; mutation approva
 and verified backups remain required. CLI workers have no tool-call deadline.
 Server shutdown retains the existing owned-process cleanup behavior.
 
-Fixtures under `tests/fixtures` cover SVG ink, native ERC report syntax,
-deduplication and failure receipts. `schematic-fixture.kicad_sch` also supports
-live readback: its two annotations intentionally collide and its ground has no
-power source. KiCad 10.0.5 readback returns the collision and power error, then a
-managed netlist export completes with its owned process tree stopped.
+Fixtures under `tests/fixtures` cover SVG ink, native ERC report syntax,`r`ndeduplication and failure receipts.

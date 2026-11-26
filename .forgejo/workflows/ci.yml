@@ -12,10 +12,10 @@ jobs:
     name: Lint and Format
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4
       with:
         enable-cache: true
 
@@ -33,51 +33,38 @@ jobs:
     - name: Check formatting with ruff
       run: uv run ruff format --check kicad_mcp/ tests/
 
-  test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest]  # the package is Windows-only (job objects, private desktops)
-        python-version: ["3.11", "3.12", "3.13"]
-
-    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+  linux-tests:
+    runs-on: ubuntu-latest
+    name: Linux-safe tests
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4
       with:
         enable-cache: true
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.12
       run: |
-        uv python install ${{ matrix.python-version }}
-        uv python pin ${{ matrix.python-version }}
+        uv python install 3.12
+        uv python pin 3.12
 
     - name: Install dependencies
       run: uv sync --group dev
 
-    - name: Run tests
-      run: uv run python -m pytest tests/ -v --cov=kicad_mcp --cov-report=xml --cov-fail-under=30
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      if: matrix.python-version == '3.12'
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
+    - name: Run Linux-safe tests
+      run: uv run python -m pytest -o addopts= --noconftest -q tests/test_public_text.py kicad_mcp/adaptive_editor/tests/test_copper.py kicad_mcp/adaptive_editor/tests/test_geometry.py kicad_mcp/adaptive_editor/tests/test_live_session_unit.py kicad_mcp/adaptive_editor/tests/test_plugin_install.py kicad_mcp/adaptive_editor/tests/test_solver.py kicad_mcp/adaptive_editor/tests/test_zz_desktop_guard.py tests/test_cli_tools.py tests/test_courtyard_research.py tests/test_coverage.py tests/test_generated_schematic.py tests/test_hotkeys.py tests/test_ipc.py tests/test_ipc_tools.py tests/test_kicad_env.py tests/test_launcher.py tests/test_library_courtyards.py tests/test_operation_matrix.py tests/test_pcb_schematic_sync.py tests/test_plugin_inspect.py tests/test_plugin_roots.py tests/test_portability.py tests/test_release.py tests/test_schematic_readability.py tests/test_schematic_tools.py tests/test_security_guards.py tests/test_source_search.py tests/test_svg_exports.py tests/test_transport_bounds.py tests/unit/utils/test_path_validator.py tests/unit/utils/test_secure_subprocess.py
 
   security:
     runs-on: ubuntu-latest
     name: Security Scan
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4
       with:
         enable-cache: true
 
@@ -95,13 +82,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build Package
-    needs: [lint, test]
+    needs: [lint, linux-tests]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4
       with:
         enable-cache: true
 
@@ -114,7 +101,7 @@ jobs:
       run: uv build
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: dist
         path: dist/

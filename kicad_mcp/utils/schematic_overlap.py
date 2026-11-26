@@ -49,6 +49,22 @@ def f(v):
     return float(v)
 
 
+def _place(px, py, angle, mirror):
+    """Place a library-coordinate point through a symbol's rotation and mirror."""
+    a = float(angle) % 360
+    if a in (0, 90, 180, 270):
+        cos_a, sin_a = {0: (1, 0), 90: (0, 1), 180: (-1, 0), 270: (0, -1)}[int(a)]
+    else:
+        radians = math.radians(a)
+        cos_a, sin_a = math.cos(radians), math.sin(radians)
+    tx, ty = px * cos_a - py * sin_a, px * sin_a + py * cos_a
+    if mirror == "x":
+        ty = -ty
+    elif mirror == "y":
+        tx = -tx
+    return tx, ty
+
+
 def inter(a, b, tol=TOL):
     """boxes (x1, y1, x2, y2) overlap by more than tol on both axes"""
     return min(a[2], b[2]) - max(a[0], b[0]) > tol and min(a[3], b[3]) - max(a[1], b[1]) > tol
@@ -112,7 +128,16 @@ def geometry(path):
             if lib is None or sub(lib, "power"):
                 continue
             x0, y0 = f(at[1]), f(at[2])
+            angle = f(at[3]) if len(at) > 3 else 0
+            mirror_node = sub(it, "mirror")
+            mirror = mirror_node[0][1] if mirror_node else None
             xs, ys = [], []
+
+            def add_point(px, py):
+                tx, ty = _place(px, py, angle, mirror)
+                xs.append(x0 + tx)
+                ys.append(y0 - ty)
+
             for us in sub(lib, "symbol"):
                 m = re.match(r".*_(\d+)_(\d+)$", us[1][1])
                 if not m or int(m.group(1)) not in (0, unit):
@@ -123,25 +148,29 @@ def geometry(path):
                     if head(g) == "rectangle":
                         for k in ("start", "end"):
                             c = sub(g, k)[0]
-                            xs.append(f(c[1])); ys.append(f(c[2]))
+                            add_point(f(c[1]), f(c[2]))
                     elif head(g) == "polyline":
                         for c in sub(sub(g, "pts")[0], "xy"):
-                            xs.append(f(c[1])); ys.append(f(c[2]))
+                            add_point(f(c[1]), f(c[2]))
                     elif head(g) == "circle":
                         c, r = sub(g, "center")[0], f(sub(g, "radius")[0][1])
-                        xs += [f(c[1]) - r, f(c[1]) + r]; ys += [f(c[2]) - r, f(c[2]) + r]
+                        cx, cy = f(c[1]), f(c[2])
+                        for px, py in ((cx-r, cy-r), (cx-r, cy+r), (cx+r, cy-r), (cx+r, cy+r)):
+                            add_point(px, py)
                     elif head(g) == "arc":
                         for k in ("start", "mid", "end"):
                             c = sub(g, k)[0]
-                            xs.append(f(c[1])); ys.append(f(c[2]))
+                            add_point(f(c[1]), f(c[2]))
                     elif head(g) == "pin":
                         pa = sub(g, "at")[0]
                         px, py, ang = f(pa[1]), f(pa[2]), f(pa[3])
                         ln = f(sub(g, "length")[0][1])
                         qx, qy = px + ln * round(math.cos(math.radians(ang))), py + ln * round(math.sin(math.radians(ang)))
-                        pins.append((ref, (x0 + px, y0 - py, x0 + qx, y0 - qy)))
+                        tx, ty = _place(px, py, angle, mirror)
+                        ux, uy = _place(qx, qy, angle, mirror)
+                        pins.append((ref, (x0 + tx, y0 - ty, x0 + ux, y0 - uy)))
             if xs:
-                bodies.append((ref, (x0 + min(xs), y0 - max(ys), x0 + max(xs), y0 - min(ys))))
+                bodies.append((ref, (min(xs), min(ys), max(xs), max(ys))))
     return wires, boxes, bodies, pins
 
 

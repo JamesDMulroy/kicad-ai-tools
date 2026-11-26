@@ -475,7 +475,11 @@ class SecureSubprocessRunner:
         full_command = [kicad_cli] + command_args
 
         # Log command for debugging (sanitized)
-        logger.debug(f"Executing KiCad command: {' '.join(full_command)}")
+        logger.debug(
+            "Executing KiCad command: %s (%d arguments)",
+            os.path.basename(kicad_cli),
+            len(full_command) - 1,
+        )
 
         try:
             return self._run_subprocess(
@@ -526,7 +530,8 @@ class SecureSubprocessRunner:
         command: list[str],
         working_dir: str | None = None,
         timeout: float | None = None,
-        allowed_commands: list[str] | None = None,
+        *,
+        allowed_commands: list[str],
         capture_output: bool = True,
     ) -> subprocess.CompletedProcess:
         """
@@ -550,16 +555,23 @@ class SecureSubprocessRunner:
 
         executable = command[0]
 
-        # Validate executable against whitelist if provided
-        if allowed_commands and executable not in allowed_commands:
+        if not allowed_commands:
+            raise SecureSubprocessError("run_safe_command requires a non-empty allowed_commands list")
+
+        # Validate executable against whitelist
+        if executable not in allowed_commands:
             raise SecureSubprocessError(f"Command '{executable}' not in allowed list")
 
         # Validate working directory
         if working_dir:
             working_dir = self.path_validator.validate_directory(working_dir, must_exist=True)
 
-        # Log command for debugging (sanitized)
-        logger.debug(f"Executing safe command: {' '.join(command)}")
+        # Log only the executable name and argument count to avoid exposing arguments.
+        logger.debug(
+            "Executing safe command: %s (%d arguments)",
+            os.path.basename(executable),
+            len(command) - 1,
+        )
 
         try:
             return self._run_subprocess(

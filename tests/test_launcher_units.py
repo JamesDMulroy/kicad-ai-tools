@@ -297,7 +297,6 @@ def test_writing_to_a_closed_client_is_harmless():
 
 def test_cli_resolution_reports_config_errors_without_fallback(monkeypatch, tmp_path):
     from kicad_mcp.adaptive_editor import kicad_env
-    from kicad_mcp.tools.drc_impl import cli_drc
     from kicad_mcp.utils import kicad_api_detection
     from kicad_mcp.utils.kicad_cli import KiCadCLIManager
     bad = tmp_path / "isolated-config.json"
@@ -309,9 +308,6 @@ def test_cli_resolution_reports_config_errors_without_fallback(monkeypatch, tmp_
         assert kicad_api_detection.check_for_cli_api() is False
         ok, reason = kicad_api_detection.cli_api_status()
         assert ok is False and reason.startswith("config_invalid")  # the actual cause, not "install KiCad"
-        assert cli_drc.find_kicad_cli() is None
-        drc = asyncio.run(cli_drc.run_drc_via_cli(str(tmp_path / "board.kicad_pcb")))
-        assert drc["success"] is False and "config_invalid" in drc["error"] and "Install KiCad" not in drc["error"]
         assert KiCadCLIManager().find_kicad_cli(force_refresh=True) is None
     finally:
         kicad_env.kicad_app_root.cache_clear()
@@ -405,24 +401,6 @@ def test_any_client_json_value_is_answered_and_the_session_continues(line):
     replies = _emitted(la)
     assert replies[-1] == {"jsonrpc": "2.0", "id": 9, "result": {}}  # the session survived the bad line
     assert any("error" in r for r in replies[:-1])
-
-
-def test_drc_history_imports_without_a_data_folder():
-    code = "\n".join((
-        "from kicad_mcp.adaptive_editor import kicad_env as k",
-        "k.windows_known_folder = lambda _folder: None",
-        "import kicad_mcp.utils.drc_history as d  # must import even with no data folder",
-        "try:",
-        "    d.history_dir()",
-        "except k.ConfigError as e:",
-        "    print('refused:', k.DATA_DIR_ENV in str(e))",
-    ))
-    env = {k: v for k, v in os.environ.items() if k not in ("LOCALAPPDATA", "KICAD_AI_TOOLS_DATA_DIR")}
-    done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env, timeout=120,
-                          cwd=str(L.PACKAGE.parent))
-    assert done.returncode == 0, done.stderr
-    if os.name == "nt":
-        assert "refused: True" in done.stdout
 
 
 def test_setup_check_reports_a_missing_pythonw_instead_of_exiting(monkeypatch, capsys, tmp_path):

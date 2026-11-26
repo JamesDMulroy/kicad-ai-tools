@@ -78,56 +78,27 @@ def _capability_matrix() -> dict[str, list[str]]:
             # against) have each returned a correct response against the real API.
             "kicad_source_list_tree",
             "kicad_source_read_file",
-            # Live-exercised 2026-10-10 against GitLab at commit
-            # 18fb9289ff0efdca53c0352ed81a0973f0a6b58c (tag 10.0.5); see
-            # a development receipt (not published). Five scoped cases returned
-            # complete coverage with zero missing/unexpected/mismatched blobs, the api
-            # case returned no_match with complete coverage, and whole-repo scope failed
-            # loudly with scope_too_large (compressed archive over 64 MiB). Limits:
-            # literal/identifier modes only (no regex); the scope must fit the caps, so
-            # whole-repo search must be split by top-level directory; submodules are not
-            # covered.
+            # Searches pinned source text in literal or identifier mode; regex and
+            # submodules are unsupported, and broad scopes may exceed configured limits.
             "kicad_source_search_code",
             "kicad_plugin_inventory",
-            # D1, offline and non-executing: static inspection of one package inside the
-            # host-configured quarantine root (not a tool parameter), and a closure check over
-            # wheels already in that root. Nothing is imported, compiled, executed, installed or
-            # fetched; findings are static hints, not a safety verdict. Evidence:
-            # tests/test_plugin_inspect.py (inspection and closure logic, resolve_quarantine_root,
-            # real error codes, sentinel markers stay absent), plus tests/test_full_capability_tools.py
-            # (test_plugin_inspect_tools_registered_and_listed_as_supported,
-            # test_plugin_tool_schemas_have_no_quarantine_root,
-            # test_plugin_inspect_wrapper_rejections_carry_real_codes,
-            # test_plugin_closure_check_wrapper_rejections_carry_real_codes,
-            # test_plugin_inspect_wrappers_pass_through_success,
-            # test_plugin_inspect_tools_callable_through_the_server).
+            # Offline static inspection and dependency closure checks read packages and wheels
+            # in the host-configured quarantine root; they execute nothing and are not safety verdicts.
             "kicad_plugin_inspect",
             "kicad_plugin_closure_check",
-            # Evidence: tests/test_full_capability_tools.py runs the real kicad-cli 10.0.5 hidden
-            # through run_contained on tmp_path fixtures: test_cli_run_version_real_kicad,
-            # test_cli_run_pcb_export_svg_real_kicad, test_cli_run_sch_export_netlist_real_kicad,
-            # test_cli_run_sch_upgrade_backup_is_byte_exact_real_kicad, plus the refusal tests
-            # (unknown option, mutation without allow, reserved --output, --force on exports,
-            # existing output, path outside the project, jobset run, hpgl). Commands outside that
-            # subset are validated-and-runnable, not individually integration-tested.
+            # CLI access is limited to validated commands and guarded project paths; only a
+            # subset of commands has been integration-tested against KiCad.
             "kicad_cli_commands",
             "kicad_cli_describe",
             "kicad_cli_run",
-            # L4 UI broker tools (kicad_mcp/tools/l4_tools.py, kicad_mcp/l4/). Evidence: the l4_live tests
-            # in tests/test_l4.py on real pcbnew 10.0.5 on private desktops (2026-10-11): 3-launch
-            # recording, open-and-save, Gerber export through the Plot dialog into the clone only, decoy
-            # second instance untouched, unapproved registry refused without launching; monitor verdicts
-            # 0 task windows on the input desktop, 0 foreground samples, no WTS change.
+            # L4 operations use the approved registry and brokered KiCad workflows; registry
+            # changes require re-recording and approval with KICAD_MCP_L4_APPROVED_REGISTRY_SHA256.
             "l4_operations",
             "l4_run",
             "l4_record_identifiers",
-            # Adaptive engine tools (kicad_mcp/tools/adaptive_tools.py). Evidence: tests/test_adaptive_tools.py
-            # live plan -> preview -> apply -> undo round trip on a real pcbnew board (undo restores the
-            # bytes exactly) plus stale-sha refusal and input refusals.
-            # Recorded (3-launch check) into the shipped registry, approved by the release file
-            # kicad_mcp/l4/registry/APPROVED.sha256 (owner-directed; re-recorded 2026-10-12 with the Board
-            # Setup page step), live-verified by the l4_live tests; any byte change to the registry refuses
-            # every operation.
+            # Adaptive operations use registry-recorded capabilities; the registry is
+            # approved by kicad_mcp/l4/registry/APPROVED.sha256; re-record and approve with
+            # KICAD_MCP_L4_APPROVED_REGISTRY_SHA256 after registry changes.
             "l4_operation:pcb_open_and_save",
             "l4_operation:pcb_export_gerbers_dialog",
             "l4_operation:pcb_board_setup_read",
@@ -161,7 +132,6 @@ def _capability_matrix() -> dict[str, list[str]]:
 
 
 def register_full_capability_tools(mcp: FastMCP) -> None:
-    # covers: MCP-3
     @mcp.tool()
     def kicad_capability_report() -> dict[str, Any]:
         """Typed, versioned capability discovery for this narrow KiCad 10.0.5 tool surface."""

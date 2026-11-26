@@ -26,6 +26,7 @@ from kicad_mcp.ipc.session import HeadlessSession, SessionError
 
 MAX_SESSIONS = 4  # each is a KiCad process; the cap keeps a busy machine responsive
 _sessions: dict[str, Any] = {}
+_pending = 0  # reserved slots for sessions still starting
 _runners: dict[str, Any] = {}  # session id -> HotkeyRunner (schematic sessions)
 _lock = threading.Lock()
 
@@ -43,9 +44,12 @@ def _error(exc: Exception) -> dict[str, Any]:
 
 
 def session_open(document: str, mode: Literal["headless", "gui"] = "headless") -> dict[str, Any]:
+    global _pending
     with _lock:
-        if len(_sessions) >= MAX_SESSIONS:
+        if len(_sessions) + _pending >= MAX_SESSIONS:
             return _error(SessionError(f"{MAX_SESSIONS} sessions are open; close one first"))
+        _pending += 1
+    inserted = False
     try:
         if mode == "gui":
             from kicad_mcp.ipc.gui_session import GuiSession
@@ -53,12 +57,18 @@ def session_open(document: str, mode: Literal["headless", "gui"] = "headless") -
             session = GuiSession(document).start()
         else:
             session = HeadlessSession(document).start()
+        session_id = uuid.uuid4().hex[:12]
+        with _lock:
+            _sessions[session_id] = session
+            _pending -= 1
+            inserted = True
+        return {"status": "ok", "session_id": session_id, **_describe(session)}
     except Exception as exc:  # noqa: BLE001 - every failure is a structured answer to the caller
         return _error(exc)
-    session_id = uuid.uuid4().hex[:12]
-    with _lock:
-        _sessions[session_id] = session
-    return {"status": "ok", "session_id": session_id, **_describe(session)}
+    finally:
+        if not inserted:
+            with _lock:
+                _pending -= 1
 
 
 def _describe(session) -> dict[str, Any]:

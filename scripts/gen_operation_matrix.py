@@ -121,7 +121,6 @@ def rows():
 
 
 def render() -> str:
-    # covers: MCP-3
     rs = rows()
     counts: dict[str, int] = {}
     for r in rs:

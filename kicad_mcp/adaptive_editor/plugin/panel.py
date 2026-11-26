@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 
 
 def _engine_paths() -> list[Path]:
-    """Installed layout: <plugin>/engine/{live,adaptive_engine}; dev tree: AdaptiveEditor/python."""
+    """Installed layout: <plugin>/engine/{live,adaptive_engine}; source tree: kicad_mcp/adaptive_editor."""
     installed = HERE / "engine"
     if (installed / "live" / "live_session.py").is_file():
         return [installed / "live", installed]
@@ -147,7 +147,6 @@ class Controller:
 
     # ---------------------------------------------------------------- solve / apply
     def preview(self, render="prims") -> dict:
-        # covers: PLG-1
         if self.session is None:
             raise PanelError("not_started")
         self.last = self.session.update(self._request(), render=render)
@@ -364,7 +363,6 @@ def draw(canvas, prims, holder=None) -> int:
 
 
 def main(kind: str) -> int:
-    # covers: PLG-1
     import tkinter as tk
     from tkinter import messagebox
     root = tk.Tk()

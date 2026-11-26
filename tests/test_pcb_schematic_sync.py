@@ -19,12 +19,10 @@ class SyncTests(unittest.TestCase):
         def runner(*args,**kwargs):calls.append((args,kwargs));return {'ok':True}
         self.assertTrue(validate_board_candidate('board.kicad_pcb','evidence',runner)['ok'])
         self.assertTrue(calls[0][0][2]['--mode-multi']);self.assertIsNone(calls[0][1]['timeout_seconds'])
-        base=pathlib.Path(__file__).resolve().parents[1]/'.tmp/tests';base.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=base) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             a=pathlib.Path(folder)/'a';b=pathlib.Path(folder)/'b';a.write_bytes(b'correct');b.write_bytes(b'correct');self.assertTrue(same_bytes(a,b));b.write_bytes(b'wrong');self.assertFalse(same_bytes(a,b))
     def test_netlist_partition(self):
-        base=pathlib.Path(__file__).resolve().parents[1]/'.tmp/tests';base.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=base) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             path=pathlib.Path(folder)/'in.net'
             path.write_text('(export (components (comp (ref "R1") (value "10k") (footprint "L:R") (tstamps "abc") (sheetpath (tstamps "/root/sheet/")) (fields (field (name "FIT2Ref") "ORIGINAL_R") (field (name "Description")) (field (name "LCSC") "")) (property (name "exclude_from_bom")))) (nets (net (code "1") (name "GND") (node (ref "R1") (pin "2")))))')
             result=netlist_data(path)
@@ -32,8 +30,7 @@ class SyncTests(unittest.TestCase):
             self.assertEqual(result[0]['path'],'/root/sheet/')
             self.assertEqual(result[0]['fields'],{'FIT2Ref':'ORIGINAL_R','Description':'','LCSC':''});self.assertTrue(result[0]['exclude_from_bom'])
     def test_preview_and_missing_pad_refuse(self):
-        base=pathlib.Path(__file__).resolve().parents[1]/'.tmp/tests';base.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=base) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             lib=pathlib.Path(folder);(lib/'Part.kicad_mod').write_text('(footprint "Part" (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu")) (pad "2" smd rect (at 2 0) (size 1 1) (layers "F.Cu")))')
             component={'reference':'U1','footprint':'L:Part','pads':{'1':'GND'}}
             spec={'components':[component],'libraries':{'L':str(lib)},'apply':False}
@@ -46,8 +43,7 @@ class SyncTests(unittest.TestCase):
         spec={'components':[{'reference':'U1','footprint':'Part','pads':{}}],'libraries':{},'apply':True}
         self.assertFalse(execute(spec)['ok'])
     def test_roundtrip_preserves_mechanics_replaces_copper(self):
-        base=pathlib.Path(__file__).resolve().parents[1]/'.tmp/tests';base.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=base) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             lib=pathlib.Path(folder);(lib/'Part.kicad_mod').write_text('(footprint "Part" (layer "F.Cu") (attr smd exclude_from_bom) (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu")))')
             board=lib/'old.kicad_pcb';board.write_text('(kicad_pcb (version 20241229) (gr_line (start 0 0) (end 10 0) (layer "Edge.Cuts")) (footprint "obsolete") (segment (start 0 0) (end 1 1)) (net 5 "old"))')
             spec={'components':[{'reference':'U1','value':'Device','footprint':'L:Part','pads':{'1':'GND'},'path':'/root/sheet/','uuid':'part','fields':{'FIT2Ref':'ORIGINAL_U','LCSC':'C123'}}],'libraries':{'L':str(lib)},'apply':True,'board':str(board),'candidate':str(lib/'new.kicad_pcb')}

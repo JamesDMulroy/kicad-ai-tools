@@ -8,7 +8,7 @@ i.e. KiCad computed a result from the new input.
     python -m kicad_mcp.coverage.live_programs --inventory inv.json --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import contextlib
@@ -16,7 +16,6 @@ import json
 from pathlib import Path
 import re
 import shutil
-import tempfile
 import time
 
 from kicad_mcp.ipc.gui_session import ProgramSession
@@ -214,7 +213,7 @@ IMAGE_FORMATS = {  # output format -> (radio label, extension, what the file mus
     "DRAWING_SHEET_FMT": ("Drawing Sheet (.kicad_wks file)", ".kicad_wks", "(kicad_wks"),
 }
 # The clipboard export writes the shared clipboard (a private desktop shares its window station's),
-# so it runs inside coverage.clipboard.preserved(), which restores the owner's text (approved 2026-10-14).
+# so it runs inside coverage.clipboard.preserved(), which restores the user's clipboard text.
 CLIPBOARD_FORMATS = {"SYMBOL_PASTE_FMT": "Symbol (.kicad_sym file)"}
 
 
@@ -232,7 +231,7 @@ def _export_clipboard(session: ProgramSession, radio: str) -> dict:
     ok = obs.new_content and "(symbol" in (obs.text or "") and obs.restored is True
     return {"clipboard_restored": obs.restored, "outcome": "ok" if ok else "error",
             "detail": f"clipboard sequence {obs.before_sequence}->{obs.after_sequence}, text starts {(obs.text or '')[:40]!r}; "
-                      f"owner text restored: {obs.restored}"}
+                      f"user clipboard text restored: {obs.restored}"}
 
 
 def _export(session: ProgramSession, radio: str, target: Path) -> None:
@@ -273,7 +272,7 @@ def sweep_images(inventory: dict, image: Path) -> list[dict]:
                     row = _export_clipboard(session, CLIPBOARD_FORMATS[fmt])
                 except Exception as exc:  # noqa: BLE001
                     row = {"outcome": "error", "clipboard_restored": None,
-                           "detail": f"{type(exc).__name__}: {str(exc)[:160]} (the guard restored the owner text on exit if it was readable)"}
+                           "detail": f"{type(exc).__name__}: {str(exc)[:160]} (the guard restored the user's clipboard text on exit if it was readable)"}
                 rows.append({"program": f"bitmap2component:{fmt}", **row})
                 continue
             radio, ext, header = IMAGE_FORMATS[fmt]

@@ -5,7 +5,7 @@ Python's subprocess startup-info class has no ``lpDesktop`` field; setting it th
 Each process also gets ``CREATE_NO_WINDOW`` and the no-crash-dialog error mode, which its children
 inherit.
 
-A tripwire watches the owner's input desktop for any window owned by the whole process tree (the
+A tripwire watches the user's input desktop for any window owned by the whole process tree (the
 root process and all its descendants, by exact PID). If one appears, the tree is killed.
 
 pcbnew runs with a task-owned profile, pre-seeded so KiCad's start wizard has nothing to ask:
@@ -28,7 +28,6 @@ import msvcrt
 import os
 import shutil
 import sys
-import tempfile
 import threading
 import time
 import weakref
@@ -184,7 +183,7 @@ def tree_pids(roots, created=pid_creation_time) -> set[int]:
 
 
 def owner_desktop_scan(roots) -> list[dict] | None:
-    """Windows on the owner's input desktop owned by any process in the given trees, or None when the
+    """Windows on the user's input desktop owned by any process in the given trees, or None when the
     input desktop cannot be opened (e.g. locked): "could not look" is never reported as "nothing seen"."""
     pids = tree_pids(roots) | owned_job_pids()
     inp = user32.OpenInputDesktop(0, False, 0x0001)
@@ -214,11 +213,11 @@ def owned_job_pids() -> set[int]:
 
 
 def owner_windows_of_tree(roots) -> list[dict]:
-    """Windows on the owner's input desktop owned by any process in the given trees. Fails closed: when the
+    """Windows on the user's input desktop owned by any process in the given trees. Fails closed: when the
     input desktop cannot be observed (e.g. locked) it raises OwnerDesktopUnobservable, never returns []."""
     seen = owner_desktop_scan(roots)
     if seen is None:
-        raise OwnerDesktopUnobservable("the owner's desktop could not be observed (locked?); the run is stopped")
+        raise OwnerDesktopUnobservable("the user's desktop could not be observed (locked?); the run is stopped")
     return seen
 
 
@@ -407,7 +406,7 @@ def _quote(arg) -> str:
 @cleanup_after_call
 def run_hidden(argv, cwd=None, timeout_s: float = 300.0, env: dict | None = None) -> dict:
     """Run a command to completion on a fresh private desktop with output captured; the tripwire watches
-    the whole tree for the entire run and kills it if any of its windows reaches the owner's desktop."""
+    the whole tree for the entire run and kills it if any of its windows reaches the user's desktop."""
     work = Path(scoped_mkdtemp(prefix="hidden-run-"))
     out_path, err_path = work / "stdout.txt", work / "stderr.txt"
     with HiddenDesktop("run") as desk:

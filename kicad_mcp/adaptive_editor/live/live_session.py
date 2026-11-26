@@ -12,13 +12,12 @@ inside a commit takes effect (tests_live/probe_commit_visibility.py). So (LIVE-P
   cancel() nothing was written; just end the session.
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, temporary_owner
 
 import json
 import os
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 from kipy.geometry import Vector2
@@ -151,7 +150,6 @@ class LiveSession:
         return sigs
 
     def start(self):
-        # covers: ADE-5
         # Signatures before and after the text snapshot must agree, so baseline and signatures match.
         for _attempt in range(3):
             state_before = self._board_state()
@@ -232,7 +230,6 @@ class LiveSession:
         return r["edges"]
 
     def apply(self, message: str = "Adaptive move", refill: bool = False) -> dict:
-        # covers: ADE-5
         """Write the last previewed ChangeSet in ONE commit (one undo step); each item written once."""
         if not self.last:
             raise LiveError("nothing_to_apply")

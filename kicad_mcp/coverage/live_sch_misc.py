@@ -8,7 +8,7 @@ without the action (an unbound key in its place) gives the reference the readbac
     python -m kicad_mcp.coverage.live_sch_misc --inventory inv.json --out ev.json [--only a,b]
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import contextlib
@@ -16,7 +16,6 @@ import json
 import os
 from pathlib import Path
 import re
-import tempfile
 import time
 import uuid
 
@@ -360,7 +359,7 @@ def _tree_click(env: SchEnv, tree: int, x: int, y: int, double: bool = False) ->
 
 def _who(env: SchEnv) -> tuple[str, ...]:
     """The reference designators named by the message panel: which symbol's pin is selected."""
-    return tuple(t for t in env.texts() if re.search(r"J\d", t))
+    return tuple(t for t in env.texts() if re.search(r"\bJ\d+\b", t))
 
 
 def _net_items(env: SchEnv, pins: dict) -> list[dict]:

@@ -1,4 +1,4 @@
-"""Runs last (module order): the whole-tree owner-desktop guard started by this package saw no visible
+"""Runs last (module order): the whole-tree user-desktop guard started by this package saw no visible
 window from any process of this run and was never blind."""
 import os
 import unittest

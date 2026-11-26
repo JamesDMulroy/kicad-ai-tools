@@ -475,7 +475,6 @@ def preview(
     drc_runner: Callable | None = None,
     timeout: float = 300.0,
 ) -> dict:
-    # covers: ADE-3
     """Solve, apply to a copy, refill zones, save ``candidate.kicad_pcb`` in a new session, render, DRC.
 
     Returns ``{session, session_id, status, changeset, report, wave, pre_existing, candidate_path,
@@ -615,7 +614,6 @@ def _read_journal(sdir: str) -> dict:
 
 
 def apply(session: str, expected_sha256: str, force: bool = False, board_path: str | None = None) -> dict:
-    # covers: ADE-3
     """Atomically replace the board with the session's candidate.
 
     Refuses (``SessionRefused``) when the original's sha256 differs from the journal or from
@@ -692,7 +690,6 @@ def session_tag(sdir: str) -> str:
 
 
 def undo(session: str, board_path: str | None = None) -> dict:
-    # covers: ADE-3
     """Restore the backup byte-for-byte, only if the board still equals the applied candidate."""
     sdir = _resolve_session(session, board_path)
     journal = _read_journal(sdir)

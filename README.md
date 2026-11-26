@@ -31,7 +31,7 @@ promote it, and no KiCad window ever appears on your screen.
 
 One Python package (`kicad_mcp`) provides:
 
-- **All of KiCad through its official IPC API (KiCad 11 and the nightlies).** Schematic and board, any
+- **All of KiCad through its official IPC API (KiCad 10.99 nightly, the future KiCad 11).** Schematic and board, any
   API command the installed build defines, any editor action, all of `kicad-cli`. It works on a
   candidate copy of your project and writes back only when you promote it.
 - **An on-demand MCP server.** The launcher answers the client handshake from a cached tool manifest,
@@ -56,9 +56,10 @@ One Python package (`kicad_mcp`) provides:
 - **Windows 10 or 11.** The job runtime and the private-desktop (L4) layer use Win32 APIs. macOS and
   Linux discovery exists but is untested.
 - **Python 3.11 or newer.**
+- **KiCad, installed separately:** [download KiCad](https://www.kicad.org/download/).
 - **KiCad:**
   - KiCad 10.0.x (tested with 10.0.5) for the `kicad-cli`, adaptive and L4 tools;
-  - KiCad 11 or a nightly (10.99) for the IPC API session tools.
+  - KiCad 10.99 nightly (the future KiCad 11) for the IPC API session tools.
 
   Nothing else is needed: the package compiles the installed build's API schema locally with the
   bundled `protoc`.
@@ -69,11 +70,14 @@ One Python package (`kicad_mcp`) provides:
 
 ```
 git clone https://git.bastionary.com/james/kicad-ai-tools.git
+git clone https://github.com/JamesDMulroy/kicad-ai-tools.git
 cd kicad-ai-tools
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[l4]"
 .venv\Scripts\python -m kicad_mcp.setup --install-plugin
 ```
+
+Either repository works.
 
 `setup` does four things:
 1. Finds KiCad: from `KICAD_APP_PATH`, else the per-machine config, else the Windows registry, else
@@ -110,6 +114,8 @@ Pass the printed `claude_code_add_json` value:
 ```
 claude mcp add-json kicad_ai_tools '<claude_code_add_json>' --scope user
 ```
+
+In Windows PowerShell 5.1 the inner quotes are stripped; use PowerShell 7.3 or later, or paste the JSON from a file.
 
 Then start a new session and run `/mcp` to check that `kicad_ai_tools` is connected.
 
@@ -183,12 +189,23 @@ person running the server sets `KICAD_AI_TOOLS_ALLOW_BOM_GENERATOR=1`.
 
 `<KiCad python>` is KiCad's bundled interpreter, for example `<KiCad root>\bin\python.exe`.
 
+## Documentation
+
+- [Configuration](docs/configuration.md)
+- [KiCad MCP clients](docs/KICAD-MCP-CLIENTS.md)
+- [Operation matrix](docs/OPERATION-MATRIX.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Temporary storage](docs/TEMP-STORAGE.md)
+- [Security](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
+
 Tests that need KiCad or a live session skip when KiCad is not found. Live tests never show a window:
 - set `KICAD_MCP_L4_LIVE=0` / `KICAD_MCP_ADAPTIVE_LIVE=0` to skip them;
 - they write evidence under `.tmp/evidence/`, or `KICAD_AI_TOOLS_EVIDENCE_DIR` if set.
 
 The live coverage drivers in `kicad_mcp/coverage/` also need prepared fixture projects. These are copies
 of KiCad's demos with extra content, in `$KICAD_AI_FIXTURES`, and are not part of this repository.
+The `kicad_mcp/coverage/live_*` drivers are maintainer-only; they need private KiCad fixtures that are not included.
 
 ## Layout
 - **`kicad_mcp/launcher.py`, `workflow_server.py`, `setup.py`:** the launcher, the server and per-machine
@@ -218,9 +235,8 @@ following to `dist/`:
 ## License and credit
 
 MIT (see `LICENSE`). This project started from the open-source
-[`kicad-mcp`](https://github.com/lamaalrajih/kicad-mcp) server by Lama Al Rajih. Its original tools are
-still available as the `kicad-mcp` command. That legacy command is the inherited upstream server: it is outside
-the safety model described below (it can open a project in the desktop KiCad, writes files next to the project
-and reads a `.env` file). Use `kicad-ai-tools-launcher` for the guarantees in `SECURITY.md`.
+[`kicad-mcp`](https://github.com/lamaalrajih/kicad-mcp) server by Lama Al Rajih. That server's original tools are no
+longer part of this project: they worked outside the safety model in `SECURITY.md`. Use the upstream project
+if you need them.
 Third-party notices are in `THIRD-PARTY-NOTICES.md`.
 Contributions are welcome: see `CONTRIBUTING.md`.

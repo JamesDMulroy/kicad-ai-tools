@@ -184,6 +184,18 @@ class InstallerOwnership(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.inst.install(self.target, False)
 
+    def test_record_with_parent_path_is_not_trusted_by_uninstall(self):
+        outside = self.tmp / "outside.txt"
+        outside.write_text("keep me", encoding="utf-8")
+        self.target.mkdir(parents=True)
+        record = {"plugin": self.inst.PLUGIN_ID,
+                  "files": {"../outside.txt": self.inst._sha(outside)}}
+        (self.target / self.inst.RECORD).write_text(json.dumps(record), encoding="utf-8")
+        with self.assertRaises(SystemExit):
+            self.inst.uninstall(self.target, False)
+        self.assertTrue(outside.is_file())
+        self.assertEqual(outside.read_text(encoding="utf-8"), "keep me")
+
 
 if __name__ == "__main__":
     unittest.main()

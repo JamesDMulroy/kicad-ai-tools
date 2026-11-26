@@ -34,7 +34,6 @@ from kicad_mcp.tools.schematic_tools import register_schematic_tools
 
 
 def create_server():
-    # covers: MCP-4
     server = FastMCP("kicad-ai-tools")
     jobs = WorkflowJobs()
     server._workflow_jobs = jobs

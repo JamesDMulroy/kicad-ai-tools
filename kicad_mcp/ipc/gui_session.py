@@ -4,14 +4,14 @@ Some API commands exist only in the GUI (selection, focus, layer visibility, app
 move, RunAction, opening a library item): KiCad refuses them in headless ``api-server`` mode. For those,
 this session runs the real editor (eeschema or pcbnew) on a private desktop via the L4
 ``HiddenKiCad`` launcher, which owns the process tree in a job object and kills it if any window ever
-reaches the owner's desktop. Its profile is task-owned (private KICAD_CONFIG_HOME, TEMP, ...), with the
+reaches the user's desktop. Its profile is task-owned (private KICAD_CONFIG_HOME, TEMP, ...), with the
 API server enabled there only, so the user's own KiCad settings are never touched and its socket
 (``<profile>/temp/kicad/api.sock``) cannot collide with any other KiCad.
 
 It serves a candidate copy, exactly like ``HeadlessSession``; ``promote()`` is the only write-back.
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, temporary_owner
 
 from pathlib import Path
 import tempfile
@@ -99,7 +99,7 @@ class GuiSession:
         while time.monotonic() < deadline:
             if not self.kicad.alive():
                 raise SessionError(f"{self.kicad.exe} exited before its API server was ready")
-            self.kicad._tripwire(0.25)  # keep watching the owner's desktop while KiCad starts
+            self.kicad._tripwire(0.25)  # keep watching the user's desktop while KiCad starts
             probe = Client(self.socket_url, self.schema, "kicad-ai-tools.probe", timeout_ms=500)
             try:
                 probe.send(self.schema.new("kiapi.common.commands.Ping"))

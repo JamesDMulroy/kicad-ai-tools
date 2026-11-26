@@ -11,14 +11,13 @@ expected KiCad window to open. KiCad's "File Not Found ... open the online help?
     python -m kicad_mcp.coverage.live_external --inventory inv.json --project <dir> --group suite --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import contextlib
 import json
 import os
 from pathlib import Path
-import tempfile
 import time
 
 from kicad_mcp.coverage.launch_hook import LaunchHook

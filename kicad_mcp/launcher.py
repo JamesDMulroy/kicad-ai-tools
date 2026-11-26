@@ -36,7 +36,7 @@ PACKAGE = Path(__file__).resolve().parent
 SERVER_MODULE = "kicad_mcp.workflow_server"
 CATALOGUE = ("tools/list", "prompts/list", "resources/list", "resources/templates/list")
 OWN_ID = "kicad-ai-tools-launcher:"
-# Owner direction 2026-10-11: run the server only while something is using it. The idle period is a
+# The server runs only while something is using it. The idle period is a
 # per-machine setting; the default keeps a burst of related calls on one server process.
 DEFAULT_IDLE_SECONDS = 600
 
@@ -339,7 +339,6 @@ class Launcher:
             return backend
 
     def stop_backend_if_idle(self) -> None:
-        # covers: MCP-1
         with self.state_lock:
             b = self.backend
             if b is None or self.inflight or time.monotonic() - self.last_activity < idle_seconds():
@@ -580,7 +579,6 @@ def _owner_alive(owner) -> bool:
 
 
 def main(stdin=None, stdout=None) -> int:
-    # covers: MCP-1
     return Launcher(stdin or sys.stdin, stdout or sys.stdout).run()
 
 
@@ -612,7 +610,6 @@ def _pipe_stream(number: int, *, writing: bool):
 
 
 def pythonw_main() -> int:
-    # covers: MCP-1
     """Entry point under pythonw.exe (no console window ever exists): restore the pipes, then run."""
     try:
         sys.stderr = sys.__stderr__ = _pipe_stream(-12, writing=True)

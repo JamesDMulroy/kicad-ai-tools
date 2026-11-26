@@ -94,7 +94,6 @@ def _clear_caches() -> None:
 
 
 def main(argv=None) -> int:
-    # covers: MCP-2
     keys = [key for key, _env, _meaning in kicad_env.SETTINGS]
     ap = argparse.ArgumentParser(description="kicad-ai-tools per-machine setup")
     ap.add_argument("--check", action="store_true", help="report only; write nothing")

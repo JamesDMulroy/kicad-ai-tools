@@ -9,13 +9,12 @@ extension the manager does not take) is the control.
     python -m kicad_mcp.coverage.live_manager --inventory inv.json --project <dir> --out ev.json
 """
 from __future__ import annotations
-from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call, temporary_owner
+from kicad_mcp.utils.temp_cleanup import scoped_mkdtemp, cleanup_after_call
 
 import argparse
 import contextlib
 import json
 from pathlib import Path
-import tempfile
 import time
 
 from kicad_mcp.coverage.drop_hook import DropHook

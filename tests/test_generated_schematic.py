@@ -42,21 +42,18 @@ class GeneratedSchematicTests(unittest.TestCase):
     def test_transaction(self):
         import tempfile
         for fn in [check_parse_failure_preserves_original,check_promote_preserves_backup_and_complete_sources,check_explicit_mutation_required]:
-            scratch=Path(__file__).resolve().parents[1]/'.tmp/tests';scratch.mkdir(parents=True,exist_ok=True)
-            with self.subTest(case=fn.__name__), tempfile.TemporaryDirectory(dir=scratch) as d:
+            with self.subTest(case=fn.__name__), tempfile.TemporaryDirectory() as d:
                 fn(Path(d))
 
     def test_escapes(self):
         import tempfile
         for name in ['../evil.kicad_sch','sub/evil.kicad_sch','sub\\evil.kicad_sch','C:evil.kicad_sch','payload.py','F.pretty/../../evil.kicad_mod']:
-            scratch=Path(__file__).resolve().parents[1]/'.tmp/tests';scratch.mkdir(parents=True,exist_ok=True)
-            with self.subTest(name=name), tempfile.TemporaryDirectory(dir=scratch) as d:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as d:
                 check_filename_escape_rejected(Path(d),name)
 
     def test_local_library_tables_in_transaction(self):
         import tempfile
-        scratch=Path(__file__).resolve().parents[1]/'.tmp/tests';scratch.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=scratch) as d:
+        with tempfile.TemporaryDirectory() as d:
             tmp_path=Path(d)
             files={'root.kicad_sch':'new','sym-lib-table':'(sym_lib_table)','fp-lib-table':'(fp_lib_table)','root.kicad_pro':'{}'}
             out=tmp_path/'dest'
@@ -67,8 +64,7 @@ class GeneratedSchematicTests(unittest.TestCase):
                 write_bundle(spec(tmp_path,files),str(out),str(tmp_path/'jobs'),True,lambda *a,**kw:{'ok':True})
     def test_existing_gate_settings_preserved_and_concurrent_edit_refused(self):
         import tempfile
-        scratch=Path(__file__).resolve().parents[1]/'.tmp/tests';scratch.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=scratch) as d:
+        with tempfile.TemporaryDirectory() as d:
             tmp=Path(d);dest=tmp/'dest';dest.mkdir();project=dest/'root.kicad_pro';project.write_text('{"board":{"design_settings":{"rules":{"min_clearance":0.2}}}}')
             before=project.read_bytes();files={'root.kicad_sch':'new','root.kicad_pro':'{}'}
             result=write_bundle(spec(tmp,files),str(dest),str(tmp/'jobs'),True,lambda *a,**kw:{'ok':True})
@@ -80,16 +76,14 @@ class GeneratedSchematicTests(unittest.TestCase):
             self.assertEqual(project.read_text(),'{"owner_edit":true}')
     def test_project_footprint_library_transaction(self):
         import tempfile
-        scratch=Path(__file__).resolve().parents[1]/'.tmp/tests';scratch.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=scratch) as d:
+        with tempfile.TemporaryDirectory() as d:
             tmp=Path(d);dest=tmp/'dest';fp=dest/'Local.pretty/Device.kicad_mod';fp.parent.mkdir(parents=True);fp.write_text('old')
             files={'root.kicad_sch':'new','Local.pretty/Device.kicad_mod':'new footprint'}
             result=write_bundle(spec(tmp,files),str(dest),str(tmp/'jobs'),True,lambda *a,**kw:{'ok':True})
             self.assertEqual(fp.read_text(),'new footprint');self.assertEqual((Path(result['backup_dir'])/'Local.pretty/Device.kicad_mod').read_text(),'old')
     def test_optional_obsolete_sheet_cleanup_has_backup(self):
         import tempfile
-        scratch=Path(__file__).resolve().parents[1]/'.tmp/tests';scratch.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=scratch) as d:
+        with tempfile.TemporaryDirectory() as d:
             tmp=Path(d);dest=tmp/'dest';dest.mkdir();old=dest/'obsolete.kicad_sch';old.write_text('old');(dest/'keep.md').write_text('notes')
             result=write_bundle(spec(tmp),str(dest),str(tmp/'jobs'),True,lambda *a,**kw:{'ok':True},True)
             self.assertFalse(old.exists());self.assertEqual((Path(result['backup_dir'])/'obsolete.kicad_sch').read_text(),'old');self.assertTrue((dest/'keep.md').exists())
@@ -98,8 +92,7 @@ class GeneratedSchematicTests(unittest.TestCase):
 class GeneratedStaticModelTests(unittest.TestCase):
     def test_model_backup_and_active_content_rejection(self):
         import tempfile
-        scratch=Path(__file__).resolve().parents[1]/'.tmp/tests';scratch.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=scratch) as d:
+        with tempfile.TemporaryDirectory() as d:
             tmp=Path(d);dest=tmp/'dest';name='Local.3dshapes/Body.wrl'
             model='#VRML V2.0 utf8\nShape { geometry Box { size 1 2 3 } }\n'
             files={'root.kicad_sch':'new',name:model}
